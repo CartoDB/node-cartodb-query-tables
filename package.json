@@ -20,6 +20,7 @@
     "url": "git@github.com:CartoDB/node-cartodb-query-tables.git"
   },
   "dependencies": {
+    "underscore": "^1.8.3"
   },
   "devDependencies": {
     "cartodb-psql": "^0.6.1",
