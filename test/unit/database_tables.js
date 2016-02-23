@@ -36,7 +36,7 @@ describe('DatabaseTables', function() {
             var tables = new DatabaseTables([
                 {dbname: "db2", schema_name: "public", table_name: "tablethree", updated_at: null}
             ]);
-            assert.equal(tables.getSafeLastUpdatedAt('FALLBACK'), 'FALLBACK');
+            assert.equal(tables.getLastUpdatedAt('FALLBACK'), 'FALLBACK');
         });
     });
 });
