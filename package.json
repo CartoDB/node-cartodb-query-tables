@@ -19,9 +19,7 @@
     "type": "git",
     "url": "git@github.com:CartoDB/node-cartodb-query-tables.git"
   },
-  "dependencies": {
-    "underscore": "^1.8.3"
-  },
+  "dependencies": {},
   "devDependencies": {
     "istanbul": "^0.4.2",
     "jshint": "^2.9.1",
