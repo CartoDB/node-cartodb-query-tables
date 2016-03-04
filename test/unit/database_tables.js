@@ -49,4 +49,22 @@ describe('DatabaseTables', function() {
             assert.equal(tables.getLastUpdatedAt('FALLBACK'), 'FALLBACK');
         });
     });
+
+    describe('key', function() {
+
+        var KEY_LENGTH = 8;
+
+        it('should get an array of keys', function() {
+            var tables = new DatabaseTables([
+                {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
+                {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
+            ]);
+
+            var keys = tables.key();
+            assert.equal(keys.length, 2);
+            assert.equal(keys[0].length, KEY_LENGTH);
+            assert.equal(keys[1].length, KEY_LENGTH);
+        });
+
+    });
 });
