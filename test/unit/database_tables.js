@@ -4,6 +4,7 @@ var assert = require('assert');
 var DatabaseTables = require('../../lib/models/database_tables');
 
 describe('DatabaseTables', function() {
+
     describe('getCacheChannel', function() {
         it('should group cache-channel tables by database name', function() {
             var tables = new DatabaseTables([
@@ -13,6 +14,7 @@ describe('DatabaseTables', function() {
 
             assert.equal(tables.getCacheChannel(), 'db1:public.tableone,public.tabletwo');
         });
+
         it('should support tables coming from different databases', function() {
             var tables = new DatabaseTables([
                 {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
@@ -34,6 +36,7 @@ describe('DatabaseTables', function() {
             ]);
             assert.equal(tables.getLastUpdatedAt(), 1234567891);
         });
+
         it('getSafeLastUpdatedAt should return fallback date if a table date is unknown', function() {
             var tables = new DatabaseTables([
                 {dbname: 'db2', schema_name: 'public', table_name: 'tablethree', updated_at: null}
