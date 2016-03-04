@@ -42,4 +42,19 @@ describe('QueryTables', function() {
 
     });
 
+    describe('getAffectedTableNamesFromQuery', function() {
+
+        it('should work for empty results', function(done) {
+            var mockConnection = createMockConnection(null, []);
+            QueryTables.getAffectedTableNamesFromQuery(mockConnection, 'foo-bar-query', function (err, result) {
+                assert.ok(!err, err);
+
+                assert.ok(result);
+
+                return done();
+            });
+        });
+
+    });
+
 });
