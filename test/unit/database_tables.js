@@ -67,4 +67,19 @@ describe('DatabaseTables', function() {
         });
 
     });
+
+    describe('key', function() {
+        it('should return proper surrogate-key (db:schema.table)', function() {
+            var tables = new DatabaseTables([
+                {dbname: "db1", schema_name: "public", table_name: "tableone", updated_at: new Date(12345678)},
+            ]);
+            assert.deepEqual(tables.key(), ['t:8ny9He']);
+        });
+        it('should keep escaped tables escpaed (db:"sch-ema".table)', function() {
+            var tables = new DatabaseTables([
+                {dbname: "db1", schema_name: '"sch-ema"', table_name: "tableone", updated_at: new Date(12345678)},
+            ]);
+            assert.deepEqual(tables.key(), ['t:oVg75u']);
+        });
+    });
 });
