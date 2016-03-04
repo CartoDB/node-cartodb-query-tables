@@ -43,5 +43,10 @@ describe('DatabaseTables', function() {
             ]);
             assert.equal(tables.getLastUpdatedAt('FALLBACK'), 'FALLBACK');
         });
+
+        it('getSafeLastUpdatedAt should return fallback date if no tables were found', function() {
+            var tables = new DatabaseTables([]);
+            assert.equal(tables.getLastUpdatedAt('FALLBACK'), 'FALLBACK');
+        });
     });
 });
