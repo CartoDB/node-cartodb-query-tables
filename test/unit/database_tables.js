@@ -54,7 +54,7 @@ describe('DatabaseTables', function() {
 
         var KEY_LENGTH = 8;
 
-        it('should get an array of keys', function() {
+        it('should get an array of keys for multiple tables', function() {
             var tables = new DatabaseTables([
                 {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
                 {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
@@ -66,18 +66,15 @@ describe('DatabaseTables', function() {
             assert.equal(keys[1].length, KEY_LENGTH);
         });
 
-    });
-
-    describe('key', function() {
         it('should return proper surrogate-key (db:schema.table)', function() {
             var tables = new DatabaseTables([
-                {dbname: "db1", schema_name: "public", table_name: "tableone", updated_at: new Date(12345678)},
+                {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: new Date(12345678)},
             ]);
             assert.deepEqual(tables.key(), ['t:8ny9He']);
         });
-        it('should keep escaped tables escpaed (db:"sch-ema".table)', function() {
+        it('should keep escaped tables escaped (db:"sch-ema".table)', function() {
             var tables = new DatabaseTables([
-                {dbname: "db1", schema_name: '"sch-ema"', table_name: "tableone", updated_at: new Date(12345678)},
+                {dbname: 'db1', schema_name: '"sch-ema"', table_name: 'tableone', updated_at: new Date(12345678)},
             ]);
             assert.deepEqual(tables.key(), ['t:oVg75u']);
         });
