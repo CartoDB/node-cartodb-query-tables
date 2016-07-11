@@ -24,6 +24,62 @@ describe('DatabaseTables', function() {
 
             assert.equal(tables.getCacheChannel(), 'db1:public.tableone,public.tabletwo;;db2:public.tablethree');
         });
+
+        describe('skipNotUpdatedAtTables', function() {
+            var scenarios = [
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
+                    ],
+                    expectedCacheChannel: ''
+                },
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: null},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
+                    ],
+                    expectedCacheChannel: ''
+                },
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: undefined},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
+                    ],
+                    expectedCacheChannel: ''
+                },
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
+                    ],
+                    expectedCacheChannel: 'db1:public.tableone'
+                },
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo', updated_at: Date.now()}
+                    ],
+                    expectedCacheChannel: 'db1:public.tableone,public.tabletwo'
+                },
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                        {dbname: 'db2', schema_name: 'public', table_name: 'tablethree', updated_at: Date.now()}
+                    ],
+                    expectedCacheChannel: 'db1:public.tableone;;db2:public.tablethree'
+                }
+            ];
+            scenarios.forEach(function(scenario) {
+                it('should get an cache channel skipping tables with no updated_at', function() {
+                    var tables = new DatabaseTables(scenario.tables);
+
+                    var cacheChannel = tables.getCacheChannel(true);
+                    assert.equal(cacheChannel, scenario.expectedCacheChannel);
+                });
+            });
+        });
     });
 
     describe('getLastUpdatedAt', function() {
@@ -77,6 +133,65 @@ describe('DatabaseTables', function() {
                 {dbname: 'db1', schema_name: '"sch-ema"', table_name: 'tableone', updated_at: new Date(12345678)},
             ]);
             assert.deepEqual(tables.key(), ['t:oVg75u']);
+        });
+
+        describe('skipNotUpdatedAtTables', function() {
+            var scenarios = [
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
+                    ],
+                    expectedLength: 0
+                },
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: null},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
+                    ],
+                    expectedLength: 0
+                },
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: undefined},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
+                    ],
+                    expectedLength: 0
+                },
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
+                    ],
+                    expectedLength: 1
+                },
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo', updated_at: Date.now()}
+                    ],
+                    expectedLength: 2
+                },
+                {
+                    tables: [
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                        {dbname: 'db1', schema_name: 'public', table_name: 'tablethree', updated_at: Date.now()}
+                    ],
+                    expectedLength: 2
+                }
+            ];
+            scenarios.forEach(function(scenario) {
+                it('should get an array for multiple tables skipping the ones with no updated_at', function() {
+                    var tables = new DatabaseTables(scenario.tables);
+
+                    var keys = tables.key(true);
+                    assert.equal(keys.length, scenario.expectedLength);
+                    keys.forEach(function(key) {
+                        assert.equal(key.length, KEY_LENGTH);
+                    });
+                });
+            });
         });
     });
 });
