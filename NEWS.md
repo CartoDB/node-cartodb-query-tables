@@ -1,6 +1,6 @@
 # Version 0.3.0
 
-Released 2016-mm-dd
+Released 2017-09-25
 
  * Allow zoom, x, y, bbox query variables.
 
