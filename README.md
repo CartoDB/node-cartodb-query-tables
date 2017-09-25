@@ -8,8 +8,8 @@ Library intentions and responsibilities: TBA.
 
 ## Dependencies
 
- * Node >=0.10
- * npm >=2.x
+ * Node >=6
+ * npm >=3.x
  * cartodb-postgresql: databases that this library will run against require cartodb-postgresql >= 0.14.0.
 
 ## Install
