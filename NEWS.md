@@ -1,6 +1,6 @@
 # Version 0.4.0
 
-Released 2017-mm-dd
+Released 2017-11-21
 
  * Support Node.js 8 and 10
  * Add package-lock.json
