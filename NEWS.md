@@ -2,7 +2,7 @@
 
 Released 2017-mm-dd
 
- * Support Node.js 10
+ * Support Node.js 8 and 10
  * Add package-lock.json
 
 
