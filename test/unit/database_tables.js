@@ -194,4 +194,288 @@ describe('DatabaseTables', function() {
             });
         });
     });
+
+    describe('getTables', function () {
+        const scenarios = [
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34'
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: false,
+                expectedLength: 0
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: null},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34'
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: false,
+                expectedLength: 0
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: undefined},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34'
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: false,
+                expectedLength: 0
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34',
+                        updated_at: Date.now()
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: false,
+                expectedLength: 2
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo', updated_at: Date.now()},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34',
+                        updated_at: Date.now()
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: false,
+                expectedLength: 3
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tablethree', updated_at: Date.now()},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34',
+                        updated_at: Date.now()
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: false,
+                expectedLength: 3
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34'
+                    }
+                ],
+                skipNotUpdatedAtTables: false,
+                skipAnalysisCachedTables: true,
+                expectedLength: 2
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: null},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34'
+                    }
+                ],
+                skipNotUpdatedAtTables: false,
+                skipAnalysisCachedTables: true,
+                expectedLength: 2
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: undefined},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34'
+                    }
+                ],
+                skipNotUpdatedAtTables: false,
+                skipAnalysisCachedTables: true,
+                expectedLength: 2
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34',
+                        updated_at: Date.now()
+                    }
+                ],
+                skipNotUpdatedAtTables: false,
+                skipAnalysisCachedTables: true,
+                expectedLength: 2
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo', updated_at: Date.now()},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34',
+                        updated_at: Date.now()
+                    }
+                ],
+                skipNotUpdatedAtTables: false,
+                skipAnalysisCachedTables: true,
+                expectedLength: 2
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tablethree', updated_at: Date.now()},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34',
+                        updated_at: Date.now()
+                    }
+                ],
+                skipNotUpdatedAtTables: false,
+                skipAnalysisCachedTables: true,
+                expectedLength: 3
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34'
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: true,
+                expectedLength: 0
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: null},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34'
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: true,
+                expectedLength: 0
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: undefined},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34'
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: true,
+                expectedLength: 0
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34',
+                        updated_at: Date.now()
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: true,
+                expectedLength: 1
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo', updated_at: Date.now()},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34',
+                        updated_at: Date.now()
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: true,
+                expectedLength: 2
+            },
+            {
+                result: [
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: Date.now()},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
+                    {dbname: 'db1', schema_name: 'public', table_name: 'tablethree', updated_at: Date.now()},
+                    {
+                        dbname: 'db1',
+                        schema_name: 'public',
+                        table_name: 'analysis_b194a8f896_81cc00c1cfbd5c04d3375fc0e0343a34ae979f34',
+                        updated_at: Date.now()
+                    }
+                ],
+                skipNotUpdatedAtTables: true,
+                skipAnalysisCachedTables: true,
+                expectedLength: 2
+            }
+        ];
+
+        scenarios.forEach(function ({ result, skipNotUpdatedAtTables, skipAnalysisCachedTables, expectedLength }) {
+            const filterUpdatedAt = skipNotUpdatedAtTables ? 'in' : 'out';
+            const filterAnalysisTables = skipAnalysisCachedTables ? 'in' : 'out';
+            const arrayLengthCond = `an array of ${expectedLength} items`;
+            const updatedAtCond = `filtering ${filterUpdatedAt} updated_at`;
+            const analysisTablesCond = `filtering ${filterAnalysisTables} analysis tables`;
+
+            it(`should get ${arrayLengthCond} by ${updatedAtCond} and ${analysisTablesCond}`, function () {
+                const databaseTables = new DatabaseTables(result);
+                const tables = databaseTables.getTables(skipNotUpdatedAtTables, skipAnalysisCachedTables);
+
+                assert.equal(tables.length, expectedLength);
+            });
+        });
+    });
 });
