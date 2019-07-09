@@ -1,12 +1,12 @@
 # Version 0.5.0
 
-Released 2017-mm-dd
+Released 2019-07-09
  * `.getTables()`: Add parameter to skip analysis tables from results
 
 
 # Version 0.4.0
 
-Released 2017-11-21
+Released 2018-11-21
 
  * Support Node.js 8 and 10
  * Add package-lock.json
