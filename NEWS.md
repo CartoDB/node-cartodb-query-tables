@@ -1,6 +1,7 @@
-# Version 0.4.1
+# Version 0.5.0
 
 Released 2017-mm-dd
+ * `.getTables()`: Add parameter to skip analysis tables from results
 
 
 # Version 0.4.0
