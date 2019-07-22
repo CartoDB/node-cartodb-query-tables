@@ -14,7 +14,7 @@ TEST_SUITE := $(shell find test/{integration,unit} -name "*.js")
 MOCHA_TIMEOUT := 5000
 
 test:
-	./node_modules/.bin/mocha -u bdd -t $(MOCHA_TIMEOUT) $(TEST_SUITE) ${MOCHA_ARGS}
+	./node_modules/.bin/mocha -u bdd --exit -t $(MOCHA_TIMEOUT) $(TEST_SUITE) ${MOCHA_ARGS}
 
 test-all: jshint test
 
