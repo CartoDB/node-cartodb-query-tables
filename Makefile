@@ -19,6 +19,6 @@ test:
 test-all: jshint test
 
 coverage:
-	./node_modules/.bin/istanbul cover node_modules/.bin/_mocha -- -u bdd -t $(MOCHA_TIMEOUT) $(TEST_SUITE) ${MOCHA_ARGS}
+	./node_modules/nyc/bin/nyc.js npm test
 
 .PHONY: test coverage
