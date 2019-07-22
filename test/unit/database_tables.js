@@ -1,7 +1,7 @@
 'use strict';
 
-var assert = require('assert');
-var DatabaseTables = require('../../lib/models/database_tables');
+const assert = require('assert');
+const DatabaseTables = require('../../lib/models/database_tables');
 
 describe('DatabaseTables', function() {
 
