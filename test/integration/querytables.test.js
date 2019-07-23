@@ -1,7 +1,7 @@
 'use strict';
 
-var assert = require('assert');
-var QueryTables = require('../../lib/querytables');
+const assert = require('assert');
+const QueryTables = require('../../lib/querytables');
 
 describe('QueryTables', function() {
 

@@ -13,16 +13,25 @@
     "postgresql",
     "postgis"
   ],
-  "author": "Alejandro Martínez <alejandro@cartodb.com>",
+  "author": {
+    "name": "CARTO",
+    "url": "https://carto.com/"
+  },
   "license": "BSD-3-Clause",
   "repository": {
     "type": "git",
     "url": "git@github.com:CartoDB/node-cartodb-query-tables.git"
   },
-  "dependencies": {},
   "devDependencies": {
-    "istanbul": "^0.4.2",
     "jshint": "^2.9.1",
-    "mocha": "^2.4.5"
+    "mocha": "^6.2.0",
+    "nyc": "^14.1.1"
+  },
+  "scripts": {
+    "test": "make test-all"
+  },
+  "engines": {
+    "node": "^10.15.1",
+    "npm": "^6.4.1"
   }
 }
