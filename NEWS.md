@@ -1,3 +1,10 @@
+# Version 0.6.0
+
+Released 2019-XX-XX
+  * package.json: Only support officially node 10+
+  * Add webmercator_helper with utilities to calculate tile extent and resolution
+  * Add substitution_tokens with utilities to replace tokens in SQL queries
+
 # Version 0.5.0
 
 Released 2019-07-09
