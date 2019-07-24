@@ -51,7 +51,7 @@ describe('Substitution tokens: replaceXYZ', () => {
     const tokens = ['bbox', 'pixel_width', 'pixel_height', 'scale_denominator'];
     tokens.forEach(token => {
         it('Replaces Mapnik token: ' + token, () => {
-            assert.ok(!SubstitutionTokens.replaceXYZ('!' + token + '!', { z: 1, x : 1, y : 0 }).includes("!"));
+            assert.ok(!SubstitutionTokens.hasTokens(SubstitutionTokens.replaceXYZ('!' + token + '!', { z: 1, x : 1, y : 0 } )));
         });
     });
 
@@ -62,7 +62,12 @@ describe('Substitution tokens: replaceXYZ', () => {
 
     it('Works with just the zoom', () => {
         const sql = 'Select !scale_denominator! * ST_Area(geom) from my_table';
-        assert.ok(!SubstitutionTokens.replaceXYZ(sql, { z: 1 }).includes("!"));
+        assert.ok(!SubstitutionTokens.hasTokens(SubstitutionTokens.replaceXYZ(sql, { z : 1 } )));
+    });
+
+    it('Works without arguments', () => {
+        const sql = 'Select !scale_denominator! * ST_Area(geom) from my_table where the_geom && !bbox!';
+        assert.ok(!SubstitutionTokens.hasTokens(SubstitutionTokens.replaceXYZ(sql)));
     });
 
 });
