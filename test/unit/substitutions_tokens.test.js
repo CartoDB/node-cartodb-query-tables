@@ -51,7 +51,8 @@ describe('Substitution tokens: replaceXYZ', () => {
     const tokens = ['bbox', 'pixel_width', 'pixel_height', 'scale_denominator'];
     tokens.forEach(token => {
         it('Replaces Mapnik token: ' + token, () => {
-            assert.ok(!SubstitutionTokens.hasTokens(SubstitutionTokens.replaceXYZ('!' + token + '!', { z: 1, x : 1, y : 0 } )));
+            const replaced = SubstitutionTokens.replaceXYZ('!' + token + '!', { z: 1, x : 1, y : 0 });
+            assert.ok(!SubstitutionTokens.hasTokens(replaced));
         });
     });
 
