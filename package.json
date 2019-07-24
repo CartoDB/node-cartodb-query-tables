@@ -22,13 +22,13 @@
     "type": "git",
     "url": "git@github.com:CartoDB/node-cartodb-query-tables.git"
   },
+  "dependencies": {
+    "decimal.js": "^10.2.0"
+  },
   "devDependencies": {
     "jshint": "^2.9.1",
     "mocha": "^6.2.0",
     "nyc": "^14.1.1"
-  },
-  "scripts": {
-    "test": "make test-all"
   },
   "engines": {
     "node": "^10.15.1",
