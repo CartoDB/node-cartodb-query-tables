@@ -1,0 +1,7 @@
+module.exports.name = 'test';
+module.exports.postgres = {
+    user: 'postgres',
+    host: '127.0.0.1',
+    port: 5432,
+    dbname: 'cartodb_query_tables_tests'
+};
