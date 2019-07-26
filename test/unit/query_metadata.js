@@ -1,13 +1,13 @@
 'use strict';
 
 const assert = require('assert');
-const DatabaseTables = require('../../lib/models/database_tables');
+const QueryMetadata = require('../../lib/models/query_metadata');
 
-describe('DatabaseTables', function() {
+describe('QueryMetadata', function() {
 
     describe('getCacheChannel', function() {
         it('should group cache-channel tables by database name', function() {
-            var tables = new DatabaseTables([
+            var tables = new QueryMetadata([
                 {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
                 {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
             ]);
@@ -16,7 +16,7 @@ describe('DatabaseTables', function() {
         });
 
         it('should support tables coming from different databases', function() {
-            var tables = new DatabaseTables([
+            var tables = new QueryMetadata([
                 {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
                 {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'},
                 {dbname: 'db2', schema_name: 'public', table_name: 'tablethree'}
@@ -73,7 +73,7 @@ describe('DatabaseTables', function() {
             ];
             scenarios.forEach(function(scenario) {
                 it('should get an cache channel skipping tables with no updated_at', function() {
-                    var tables = new DatabaseTables(scenario.tables);
+                    var tables = new QueryMetadata(scenario.tables);
 
                     var cacheChannel = tables.getCacheChannel(true);
                     assert.equal(cacheChannel, scenario.expectedCacheChannel);
@@ -85,7 +85,7 @@ describe('DatabaseTables', function() {
     describe('getLastUpdatedAt', function() {
 
         it('should return latest of the known dates', function() {
-            var tables = new DatabaseTables([
+            var tables = new QueryMetadata([
                 {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: new Date(12345678)},
                 {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo', updated_at: new Date(1234567891)},
                 {dbname: 'db2', schema_name: 'public', table_name: 'tablethree', updated_at: null}
@@ -94,45 +94,45 @@ describe('DatabaseTables', function() {
         });
 
         it('getSafeLastUpdatedAt should return fallback date if a table date is unknown', function() {
-            var tables = new DatabaseTables([
+            var tables = new QueryMetadata([
                 {dbname: 'db2', schema_name: 'public', table_name: 'tablethree', updated_at: null}
             ]);
             assert.equal(tables.getLastUpdatedAt('FALLBACK'), 'FALLBACK');
         });
 
         it('getSafeLastUpdatedAt should return fallback date if no tables were found', function() {
-            var tables = new DatabaseTables([]);
+            var tables = new QueryMetadata([]);
             assert.equal(tables.getLastUpdatedAt('FALLBACK'), 'FALLBACK');
         });
     });
 
-    describe('key', function() {
+    describe('getKey', function() {
 
         var KEY_LENGTH = 8;
 
         it('should get an array of keys for multiple tables', function() {
-            var tables = new DatabaseTables([
+            var tables = new QueryMetadata([
                 {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
                 {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
             ]);
 
-            var keys = tables.key();
+            var keys = tables.getKey();
             assert.equal(keys.length, 2);
             assert.equal(keys[0].length, KEY_LENGTH);
             assert.equal(keys[1].length, KEY_LENGTH);
         });
 
         it('should return proper surrogate-key (db:schema.table)', function() {
-            var tables = new DatabaseTables([
+            var tables = new QueryMetadata([
                 {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: new Date(12345678)},
             ]);
-            assert.deepEqual(tables.key(), ['t:8ny9He']);
+            assert.deepEqual(tables.getKey(), ['t:8ny9He']);
         });
         it('should keep escaped tables escaped (db:"sch-ema".table)', function() {
-            var tables = new DatabaseTables([
+            var tables = new QueryMetadata([
                 {dbname: 'db1', schema_name: '"sch-ema"', table_name: 'tableone', updated_at: new Date(12345678)},
             ]);
-            assert.deepEqual(tables.key(), ['t:oVg75u']);
+            assert.deepEqual(tables.getKey(), ['t:oVg75u']);
         });
 
         describe('skipNotUpdatedAtTables', function() {
@@ -183,9 +183,9 @@ describe('DatabaseTables', function() {
             ];
             scenarios.forEach(function(scenario) {
                 it('should get an array for multiple tables skipping the ones with no updated_at', function() {
-                    var tables = new DatabaseTables(scenario.tables);
+                    var tables = new QueryMetadata(scenario.tables);
 
-                    var keys = tables.key(true);
+                    var keys = tables.getKey(true);
                     assert.equal(keys.length, scenario.expectedLength);
                     keys.forEach(function(key) {
                         assert.equal(key.length, KEY_LENGTH);
@@ -471,8 +471,8 @@ describe('DatabaseTables', function() {
             const analysisTablesCond = `filtering ${filterAnalysisTables} analysis tables`;
 
             it(`should get ${arrayLengthCond} by ${updatedAtCond} and ${analysisTablesCond}`, function () {
-                const databaseTables = new DatabaseTables(result);
-                const tables = databaseTables.getTables(skipNotUpdatedAtTables, skipAnalysisCachedTables);
+                const queryMetadata = new QueryMetadata(result);
+                const tables = queryMetadata.getTables(skipNotUpdatedAtTables, skipAnalysisCachedTables);
 
                 assert.equal(tables.length, expectedLength);
             });
