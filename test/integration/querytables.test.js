@@ -18,16 +18,16 @@ describe('QueryTables', function() {
         };
     }
 
-    describe('getAffectedTablesFromQuery', function() {
+    describe('getQueryMetadataModel', function() {
 
         it('should return a DatabaseTables model', function(done) {
-            var mockConnection = createMockConnection(null, [{
+            const mockConnection = createMockConnection(null, [{
                 dbname: 'dbd',
                 schema_name: 'public',
                 table_name: 't1',
                 updated_at: new Date()
             }]);
-            QueryTables.getAffectedTablesFromQuery(mockConnection, 'foo-bar-query', function (err, result) {
+            QueryTables.getQueryMetadataModel(mockConnection, 'foo-bar-query', function (err, result) {
                 assert.ok(!err, err);
                 assert.ok(result);
                 assert.equal(result.getCacheChannel(), 'dbd:public.t1');
@@ -38,7 +38,7 @@ describe('QueryTables', function() {
         const tokens = ['bbox', 'pixel_width', 'pixel_height', 'scale_denominator'];
         tokens.forEach(token => {
             it('should not call Postgres with token: ' + token, function(done) {
-                var mockConnection = createMockConnection(null, [{
+                const mockConnection = createMockConnection(null, [{
                     dbname: 'dbd',
                     schema_name: 'public',
                     table_name: 't1',
@@ -46,7 +46,7 @@ describe('QueryTables', function() {
                 }]);
 
                 const query = 'Select 1 from t1 where 1 = ' + '!' + token + '!';
-                QueryTables.getAffectedTablesFromQuery(mockConnection, query, function (err, result) {
+                QueryTables.getQueryMetadataModel(mockConnection, query, function (err, result) {
                     assert.ok(!err, err);
                     assert.ok(result);
                     assert.equal(result.getCacheChannel(), 'dbd:public.t1');
@@ -56,40 +56,11 @@ describe('QueryTables', function() {
         });
 
         it('should rethrow db errors', function(done) {
-            var mockConnection = createMockConnection(new Error('foo-bar-error'));
-            QueryTables.getAffectedTablesFromQuery(mockConnection, 'foo-bar-query', function (err) {
+            const mockConnection = createMockConnection(new Error('foo-bar-error'));
+            QueryTables.getQueryMetadataModel(mockConnection, 'foo-bar-query', function (err) {
                 assert.ok(err);
                 assert.ok(err.message.match(/foo-bar-error/));
                 return done();
-            });
-        });
-
-    });
-
-    describe('getAffectedTableNamesFromQuery', function() {
-
-        it('should work for empty results', function(done) {
-            const mockConnection = createMockConnection(null, []);
-            QueryTables.getAffectedTableNamesFromQuery(mockConnection, 'foo-bar-query', function (err, result) {
-                assert.ok(!err, err);
-
-                assert.ok(result);
-
-                return done();
-            });
-        });
-
-        const tokens = ['bbox', 'pixel_width', 'pixel_height', 'scale_denominator'];
-        tokens.forEach(token => {
-            it('should not call Postgres with token: ' + token, function(done) {
-                const mockConnection = createMockConnection(null, []);
-
-                const query = 'Select 1 from t1 where 1 = ' + '!' + token + '!';
-                QueryTables.getAffectedTableNamesFromQuery(mockConnection, query, function (err, result) {
-                    assert.ok(!err, err);
-                    assert.ok(result);
-                    return done();
-                });
             });
         });
 
