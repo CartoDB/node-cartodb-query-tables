@@ -90,6 +90,7 @@
         "before",
         "after",
         "describe",
-        "it"
+        "it",
+        "xit"
     ]
 }
