@@ -10,9 +10,14 @@ describe('QueryTables', function() {
     /* Auxiliar function to create a mocked connection */
     function createMockConnection(err, rows) {
         return {
-            query: function(query, callback) {
+            query: function(sql, params, callback, readonly) {
+                if (typeof params === 'function') {
+                  readonly = callback;
+                  callback = params;
+                  params = [];
+                }
                 // Queries should never contain tokens
-                assert.equal(SubstitutionTokens.hasTokens(query), false);
+                assert.equal(SubstitutionTokens.hasTokens(sql), false);
 
                 const result = err ? null : { rows: rows };
                 return callback(err, result);
@@ -195,7 +200,6 @@ $quoted$`);
         ];
 
         // TODO: Test FDW (expected order and that it works)
-        // TODO: Fix order with "t with space"
 
         queries.forEach(q => {
             it('should return a DatabaseTables model (' + q.sql + ')', function(done) {
@@ -210,27 +214,32 @@ $quoted$`);
         });
 
 
-        const tokens = ['bbox', 'pixel_width', 'pixel_height', 'scale_denominator'];
+        const tokens = ['pixel_width', 'pixel_height', 'scale_denominator'];
         tokens.forEach(token => {
-            xit('should not call Postgres with token: ' + token, function(done) {
-                const mockConnection = createMockConnection(null, [{
-                    dbname: 'dbd',
-                    schema_name: 'public',
-                    table_name: 't1',
-                    updated_at: new Date()
-                }]);
+            it('should not call Postgres with token: ' + token, function(done) {
 
-                const query = 'Select 1 from t1 where 1 = ' + '!' + token + '!';
-                QueryTables.getQueryMetadataModel(mockConnection, query, function (err, result) {
+                const query = 'Select 1 from t1 where 1 != ' + '!' + token + '!';
+                QueryTables.getQueryMetadataModel(connection, query, function (err, result) {
                     assert.ok(!err, err);
                     assert.ok(result);
-                    assert.equal(result.getCacheChannel(), 'dbd:public.t1');
+                    assert.equal(result.getCacheChannel(), `${dbname}:public.t1`);
                     return done();
                 });
             });
         });
 
-        xit('should rethrow db errors', function(done) {
+        it('should not call Postgres with token: bbox', function(done) {
+
+            const query = 'Select 1 from t1 where 1 != ST_Area(!bbox!)';
+            QueryTables.getQueryMetadataModel(connection, query, function (err, result) {
+                assert.ok(!err, err);
+                assert.ok(result);
+                assert.equal(result.getCacheChannel(), `${dbname}:public.t1`);
+                return done();
+            });
+        });
+
+        it('should rethrow db errors', function(done) {
             const mockConnection = createMockConnection(new Error('foo-bar-error'));
             QueryTables.getQueryMetadataModel(mockConnection, 'foo-bar-query', function (err) {
                 assert.ok(err);
