@@ -93,6 +93,7 @@ create_db;
 # echo -e "\nInstalling cartodb extension";
 
 # Install cartodb extension in the new database
+# TODO: Remove this
 # psql -c 'CREATE EXTENSION IF NOT EXISTS cartodb CASCADE' ||  die "Could not install cartodb in test database";
 TEST_RESULT=0;
 if test x"$OPT_COVERAGE" = xyes; then

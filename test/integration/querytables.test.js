@@ -149,8 +149,6 @@ $quoted$`);
         });
     });
 
-
-
     describe('getQueryMetadataModel', function() {
         let connection = null;
         before((done) => {
@@ -159,7 +157,8 @@ $quoted$`);
             const readOnly = false;
             connection.query('CREATE TABLE t1(a integer); ' +
                              'CREATE TABLE t2(a integer); ' +
-                             'CREATE TABLE t3(b text);',
+                             'CREATE TABLE t3(b text); ' +
+                             'CREATE TABLE "t with space" (a integer);',
                              params, (err) =>{
                 assert.ok(!err, err);
                 done();
@@ -177,19 +176,26 @@ $quoted$`);
               expected : `${dbname}:public.t1` },
             { sql : 'SELECT * FROM t2;',
               expected : `${dbname}:public.t2` },
+            { sql : 'SELECT * FROM t2',
+              expected : `${dbname}:public.t2` },
             { sql : 'SELECT * FROM t1 UNION ALL SELECT * from t2;',
-              expected : `${dbname}:public.t1:${dbname}:public.t2` },
-            { sql : 'SELECT * FROM t1 NATURAL JOIN t2;',
-              expected : `${dbname}:public.t1:${dbname}:public.t2`},
+              expected : `${dbname}:public.t1,public.t2` },
+            { sql : 'SELECT * FROM t1 NATURAL JOIN "t with space";',
+              expected : `${dbname}:public.t1,public."t with space"`},
             { sql : 'WITH s1 AS (SELECT * FROM t1) SELECT * FROM t2;',
               expected : `${dbname}:public.t2`},
             { sql : 'SELECT 1;',
               expected : '' },
             { sql : 'TABLE t1; TABLE t2;',
-              expected : `${dbname}:public.t1:${dbname}:public.t2`},
+              expected : `${dbname}:public.t1,public.t2`},
             { sql : "Select * from t3 where b = ';'; TABLE t2",
-              expected : `${dbname}:public.t1:${dbname}:public.t2`}
+              expected : `${dbname}:public.t2,public.t3`},
+            { sql : 'TABLE t1; TABLE t1;',
+              expected : `${dbname}:public.t1`}
         ];
+
+        // TODO: Test FDW (expected order and that it works)
+        // TODO: Fix order with "t with space"
 
         queries.forEach(q => {
             it('should return a DatabaseTables model (' + q.sql + ')', function(done) {
