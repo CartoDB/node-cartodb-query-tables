@@ -160,11 +160,17 @@ $quoted$`);
             connection = createDBConnection();
             const params = {};
             const readOnly = false;
-            connection.query('CREATE TABLE t1(a integer); ' +
-                             'CREATE TABLE t2(a integer); ' +
-                             'CREATE TABLE t3(b text); ' +
-                             'CREATE TABLE "t with space" (a integer);' +
-                             'CREATE TABLE "tablena\'me" (a integer);',
+            connection.query(`
+CREATE SCHEMA IF NOT EXISTS cartodb;
+CREATE TABLE IF NOT EXISTS cartodb.CDB_TableMetadata (
+    tabname regclass not null primary key,
+    updated_at timestamp with time zone not null default now()
+  );
+CREATE TABLE t1(a integer);
+CREATE TABLE t2(a integer);
+CREATE TABLE t3(b text);
+CREATE TABLE "t with space" (a integer);
+CREATE TABLE "tablena\'me" (a integer);`,
                              params, (err) =>{
                 assert.ok(!err, err);
                 done();
@@ -202,7 +208,8 @@ $quoted$`);
               expected : `${dbname}:public."tablena'me"`}
         ];
 
-        // TODO: Test FDW (expected order and that it works)
+        // TODO: Test FDW (expected db order and that it works)
+        // TODO: Test updated_at (fdw and not)
 
         queries.forEach(q => {
             it('should return a DatabaseTables model (' + q.sql + ')', function(done) {
