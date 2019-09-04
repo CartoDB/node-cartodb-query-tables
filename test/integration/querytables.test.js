@@ -163,7 +163,8 @@ $quoted$`);
             connection.query('CREATE TABLE t1(a integer); ' +
                              'CREATE TABLE t2(a integer); ' +
                              'CREATE TABLE t3(b text); ' +
-                             'CREATE TABLE "t with space" (a integer);',
+                             'CREATE TABLE "t with space" (a integer);' +
+                             'CREATE TABLE "tablena\'me" (a integer);',
                              params, (err) =>{
                 assert.ok(!err, err);
                 done();
@@ -196,7 +197,9 @@ $quoted$`);
             { sql : "Select * from t3 where b = ';'; TABLE t2",
               expected : `${dbname}:public.t2,public.t3`},
             { sql : 'TABLE t1; TABLE t1;',
-              expected : `${dbname}:public.t1`}
+              expected : `${dbname}:public.t1`},
+            { sql : 'SELECT * FROM "tablena\'me";',
+              expected : `${dbname}:public."tablena'me"`}
         ];
 
         // TODO: Test FDW (expected order and that it works)
