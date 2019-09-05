@@ -54,10 +54,16 @@ if [[ -n "${pgPORT}" ]]; then
     echo "PGPORT:     [$PGPORT]";
 fi
 
-pgDATABASE=$(node -e "console.log(require('${TESTENV}').postgres.database || 'cartodb_query_tables_tests')");
+pgDATABASE=$(node -e "console.log(require('${TESTENV}').postgres.dbname || 'cartodb_query_tables_tests')");
+pgFDWDATABASE=$(node -e "console.log(require('${TESTENV}').postgres.fdw_dbname || 'cartodb_query_tables_fdw')");
 if [[ -n "${pgDATABASE}" ]]; then
     export PGDATABASE=${pgDATABASE};
     echo "PGDATABASE: [$PGDATABASE]";
+fi
+
+if [[ -n "${pgFDWDATABASE}" ]]; then
+    export PGFDWDATABASE=${pgFDWDATABASE};
+    echo "PGFDWDATABASE: [$PGFDWDATABASE]";
 fi
 
 
@@ -65,6 +71,8 @@ create_db() {
     if test x"$OPT_CREATE_PGSQL" = xyes; then
         echo -e "\nCreating test database: '$PGDATABASE'";
         createdb -EUTF8 "$PGDATABASE" || die "Could not create test database";
+        echo -e "\nCreating FDW test database: '$PGFDWDATABASE'";
+        createdb -EUTF8 "$PGFDWDATABASE" || die "Could not create FDW test database";
     fi
 
 }
@@ -73,6 +81,8 @@ cleanup() {
      if test x"$OPT_DROP_PGSQL" = xyes; then
         (dropdb --if-exists "$PGDATABASE" && echo -e "\nDropped database '$PGDATABASE'") ||
             (echo -e "\nCould not drop database '$PGDATABASE'. Please review the connection parameters"; exit 1);
+        (dropdb --if-exists "$PGFDWDATABASE" && echo -e "\nDropped database '$PGFDWDATABASE'") ||
+            (echo -e "\nCould not drop database '$PGFDWDATABASE'. Please review the connection parameters"; exit 1);
     fi
 }
 
@@ -82,7 +92,7 @@ die() {
     exit 1;
 }
 
-trap 'cleanup_and_exit' HUP INT QUIT ABRT TERM;
+trap 'die' HUP INT QUIT ABRT TERM;
 
 
 
