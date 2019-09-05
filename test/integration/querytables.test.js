@@ -170,6 +170,12 @@ $quoted$`);
         let fdw_connection;
         const db = require('../test_config').postgres;
 
+        const t1_updateTime = 100000;
+        // t2 doesn't use cdb_tablemetadata
+        const t3_updateTime = 101000;
+        const tablename_updateTime = 104000;
+        const remote_updateTime = 200000;
+
         before((done) => {
             connection = createDBConnection();
             fdw_connection = createFDWDBConnection();
@@ -180,17 +186,17 @@ $quoted$`);
             fdw_connection.query(`
                 CREATE SCHEMA IF NOT EXISTS remote_schema;
                 CREATE TABLE IF NOT EXISTS remote_schema.remote_table ( a integer );
+                CREATE TABLE IF NOT EXISTS remote_schema.cdb_tablemetadata
+                        (tabname text, updated_at timestamp with time zone);
+                INSERT INTO remote_schema.CDB_TableMetadata (tabname, updated_at)
+                        SELECT 'remote_schema.remote_table', to_timestamp(${remote_updateTime / 1000});
+
             `, params, (err) => {
                 assert.ok(!err, err);
 
             connection.query(`
-                    CREATE SCHEMA IF NOT EXISTS cartodb;
-                    CREATE TABLE IF NOT EXISTS cartodb.CDB_TableMetadata (
-                        tabname regclass not null primary key,
-                        updated_at timestamp with time zone not null default now()
-                      );
-                    CREATE TABLE t1(a integer);
                     CREATE TABLE t2(a integer);
+                    CREATE TABLE t1(a integer);
                     CREATE TABLE t3(b text);
                     CREATE TABLE "t with space" (a integer);
                     CREATE TABLE "tablena\'me" (a integer);
@@ -206,6 +212,15 @@ $quoted$`);
                     IMPORT FOREIGN SCHEMA remote_schema
                     FROM SERVER remote_server INTO local_fdw;
 
+                    CREATE SCHEMA IF NOT EXISTS cartodb;
+                    CREATE TABLE IF NOT EXISTS cartodb.CDB_TableMetadata (
+                        tabname regclass not null primary key,
+                        updated_at timestamp with time zone not null default now()
+                      );
+                    INSERT INTO cartodb.CDB_TableMetadata (tabname, updated_at)
+                        SELECT 'public.t1', to_timestamp(${t1_updateTime / 1000}) UNION ALL
+                        SELECT 'public.t3', to_timestamp(${t3_updateTime / 1000}) UNION ALL
+                        SELECT 'public.tablena''me', to_timestamp(${tablename_updateTime / 1000});
                     `, params, (err) => {
                 assert.ok(!err, err);
                 done();
@@ -221,34 +236,49 @@ $quoted$`);
             done();
         });
 
+        const defaultUpdateAt = -12345;
         const queries = [
-            { sql : 'TABLE t1;',
-              expected : `${db.dbname}:public.t1` },
-            { sql : 'SELECT * FROM t2;',
-              expected : `${db.dbname}:public.t2` },
-            { sql : 'SELECT * FROM t2',
-              expected : `${db.dbname}:public.t2` },
-            { sql : 'SELECT * FROM t1 UNION ALL SELECT * from t2;',
-              expected : `${db.dbname}:public.t1,public.t2` },
-            { sql : 'SELECT * FROM t1 NATURAL JOIN "t with space";',
-              expected : `${db.dbname}:public.t1,public."t with space"`},
-            { sql : 'WITH s1 AS (SELECT * FROM t1) SELECT * FROM t2;',
-              expected : `${db.dbname}:public.t2`},
-            { sql : 'SELECT 1;',
-              expected : '' },
-            { sql : 'TABLE t1; TABLE t2;',
-              expected : `${db.dbname}:public.t1,public.t2`},
-            { sql : "Select * from t3 where b = ';'; TABLE t2",
-              expected : `${db.dbname}:public.t2,public.t3`},
-            { sql : 'TABLE t1; TABLE t1;',
-              expected : `${db.dbname}:public.t1`},
-            { sql : 'SELECT * FROM "tablena\'me";',
-              expected : `${db.dbname}:public."tablena'me"`},
-            { sql : 'SELECT * FROM local_fdw.remote_table',
-              expected : `${db.fdw_dbname}:local_fdw.remote_table`}
+                { sql : 'TABLE t1;',
+                  channel : `${db.dbname}:public.t1`,
+                  updated_at : t1_updateTime },
+                { sql : 'SELECT * FROM t2;',
+                  channel : `${db.dbname}:public.t2`,
+                  updated_at : defaultUpdateAt },
+                { sql : 'SELECT * FROM t2',
+                  channel : `${db.dbname}:public.t2`,
+                  updated_at : defaultUpdateAt },
+                { sql : 'SELECT * FROM t1 UNION ALL SELECT * from t2;',
+                  channel : `${db.dbname}:public.t2,public.t1`,
+                  updated_at : t1_updateTime },
+                { sql : 'SELECT * FROM t1 NATURAL JOIN "t with space";',
+                  channel : `${db.dbname}:public.t1,public."t with space"`,
+                  updated_at : t1_updateTime },
+                { sql : 'WITH s1 AS (SELECT * FROM t1) SELECT * FROM t2;',
+                  channel : `${db.dbname}:public.t2`},
+                { sql : 'SELECT 1;',
+                  channel : '' },
+                { sql : 'TABLE t1; TABLE t2;',
+                  channel : `${db.dbname}:public.t2,public.t1`,
+                  updated_at : t1_updateTime },
+                { sql : "Select * from t3 where b = ';'; TABLE t2",
+                  channel : `${db.dbname}:public.t2,public.t3`,
+                  updated_at : t3_updateTime },
+                { sql : 'TABLE t1; TABLE t1;',
+                  channel : `${db.dbname}:public.t1`,
+                  updated_at : t1_updateTime },
+                { sql : 'SELECT * FROM "tablena\'me";',
+                  channel : `${db.dbname}:public."tablena'me"`,
+                  updated_at : tablename_updateTime },
+                { sql : 'SELECT * FROM local_fdw.remote_table',
+                  channel : `${db.fdw_dbname}:local_fdw.remote_table`,
+                  updated_at : remote_updateTime },
+                { sql : 'SELECT * FROM local_fdw.remote_table NATURAL JOIN public.t1',
+                  channel : `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
+                  updated_at : remote_updateTime },
+            { sql : 'SELECT * FROM public.t1 NATURAL JOIN local_fdw.remote_table',
+              channel : `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
+              updated_at : remote_updateTime }
         ];
-
-        // TODO: Test updated_at (fdw and not)
 
         queries.forEach(q => {
             it('should return a DatabaseTables model (' + q.sql + ')', function(done) {
@@ -256,7 +286,9 @@ $quoted$`);
                 QueryTables.getQueryMetadataModel(connection, q.sql, function (err, result) {
                     assert.ok(!err, err);
                     assert.ok(result);
-                    assert.equal(result.getCacheChannel(), q.expected);
+                    assert.equal(result.getCacheChannel(), q.channel);
+                    assert.equal(result.getLastUpdatedAt(defaultUpdateAt),
+                                 q.updated_at ? q.updated_at : defaultUpdateAt);
                     return done();
                 });
             });
