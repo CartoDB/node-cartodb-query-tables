@@ -313,6 +313,15 @@ $quoted$`);
             });
         });
 
+        it('should error with an invalid query', function(done) {
+
+            QueryTables.getQueryMetadataModel(connection,
+                        'SELECT * FROM table_that_does_not_exists', function (err, result) {
+                assert.ok(err);
+                return done();
+            });
+        });
+
 
         const tokens = ['pixel_width', 'pixel_height', 'scale_denominator'];
         tokens.forEach(token => {
