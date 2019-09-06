@@ -275,9 +275,9 @@ $quoted$`);
                 { sql : 'SELECT * FROM local_fdw.remote_table NATURAL JOIN public.t1',
                   channel : `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
                   updated_at : remote_updateTime },
-            { sql : 'SELECT * FROM public.t1 NATURAL JOIN local_fdw.remote_table',
-              channel : `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
-              updated_at : remote_updateTime }
+                { sql : 'SELECT * FROM public.t1 NATURAL JOIN local_fdw.remote_table',
+                  channel : `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
+                  updated_at : remote_updateTime }
         ];
 
         queries.forEach(q => {
@@ -291,6 +291,25 @@ $quoted$`);
                                  q.updated_at ? q.updated_at : defaultUpdateAt);
                     return done();
                 });
+            });
+        });
+
+        it('should not crash with syntax errors (DDL)', function(done) {
+
+            QueryTables.getQueryMetadataModel(connection, 'DROP TABLE t1;', function (err, result) {
+                assert.ok(!err, err);
+                assert.ok(result);
+                return done();
+            });
+        });
+
+        it('should not crash with syntax errors (INTO)', function(done) {
+
+            QueryTables.getQueryMetadataModel(connection,
+                        'SELECT generate_series(1,10) InTO t1', function (err, result) {
+                assert.ok(!err, err);
+                assert.ok(result);
+                return done();
             });
         });
 
