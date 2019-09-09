@@ -316,7 +316,7 @@ $quoted$`);
         it('should error with an invalid query', function(done) {
 
             QueryTables.getQueryMetadataModel(connection,
-                        'SELECT * FROM table_that_does_not_exists', function (err, result) {
+                        'SELECT * FROM table_that_does_not_exists', function (err) {
                 assert.ok(err);
                 return done();
             });
