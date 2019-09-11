@@ -106,7 +106,7 @@ describe('QueryMetadata', function() {
         });
     });
 
-    describe('getKey', function() {
+    describe('key', function() {
 
         var KEY_LENGTH = 8;
 
@@ -116,7 +116,7 @@ describe('QueryMetadata', function() {
                 {dbname: 'db1', schema_name: 'public', table_name: 'tabletwo'}
             ]);
 
-            var keys = tables.getKey();
+            var keys = tables.key();
             assert.equal(keys.length, 2);
             assert.equal(keys[0].length, KEY_LENGTH);
             assert.equal(keys[1].length, KEY_LENGTH);
@@ -126,13 +126,13 @@ describe('QueryMetadata', function() {
             var tables = new QueryMetadata([
                 {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: new Date(12345678)},
             ]);
-            assert.deepEqual(tables.getKey(), ['t:8ny9He']);
+            assert.deepEqual(tables.key(), ['t:8ny9He']);
         });
         it('should keep escaped tables escaped (db:"sch-ema".table)', function() {
             var tables = new QueryMetadata([
                 {dbname: 'db1', schema_name: '"sch-ema"', table_name: 'tableone', updated_at: new Date(12345678)},
             ]);
-            assert.deepEqual(tables.getKey(), ['t:oVg75u']);
+            assert.deepEqual(tables.key(), ['t:oVg75u']);
         });
 
         describe('skipNotUpdatedAtTables', function() {
@@ -185,7 +185,7 @@ describe('QueryMetadata', function() {
                 it('should get an array for multiple tables skipping the ones with no updated_at', function() {
                     var tables = new QueryMetadata(scenario.tables);
 
-                    var keys = tables.getKey(true);
+                    var keys = tables.key(true);
                     assert.equal(keys.length, scenario.expectedLength);
                     keys.forEach(function(key) {
                         assert.equal(key.length, KEY_LENGTH);

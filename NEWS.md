@@ -6,7 +6,6 @@ Released 2019-XX-XX
   * Add substitution_tokens with utilities to replace tokens in SQL queries
   * Breaking: Switched from database_tables.js to query_metadata.js
     * Uses ES6 class.
-    * key() renamed to getKey() for consistency.
   * querytables.js: Stop using cartodb-postgresql PG extension
 
 # Version 0.5.0
