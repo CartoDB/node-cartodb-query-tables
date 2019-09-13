@@ -1,6 +1,6 @@
 {
   "name": "cartodb-query-tables",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Abstraction library to use cartodb-postgresql functions to obtain affected tables for queries",
   "main": "./lib/index.js",
   "scripts": {
