@@ -4,6 +4,9 @@ Released 2019-XX-XX
   * package.json: Only support officially node 10+
   * Add webmercator_helper with utilities to calculate tile extent and resolution
   * Add substitution_tokens with utilities to replace tokens in SQL queries
+  * Breaking: Switched from database_tables.js to query_metadata.js
+    * Uses ES6 class.
+  * querytables.js: Stop using cartodb-postgresql PG extension
 
 # Version 0.5.0
 

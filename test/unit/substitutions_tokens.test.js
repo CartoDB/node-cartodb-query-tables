@@ -71,4 +71,8 @@ describe('Substitution tokens: replaceXYZ', () => {
         assert.ok(!SubstitutionTokens.hasTokens(SubstitutionTokens.replaceXYZ(sql)));
     });
 
+    it('Accepts bbox argument', () => {
+        const sql = 'Select !scale_denominator! * ST_Area(geom) from my_table where the_geom && !bbox!';
+        assert.ok(SubstitutionTokens.replaceXYZ(sql, { bbox : 'DUMMY' }).includes('DUMMY'));
+    });
 });

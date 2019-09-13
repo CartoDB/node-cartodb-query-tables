@@ -16,11 +16,11 @@ MOCHA_TIMEOUT := 5000
 check: test
 
 test:
-	./node_modules/.bin/mocha -u bdd --exit -t $(MOCHA_TIMEOUT) $(TEST_SUITE) ${MOCHA_ARGS}
+	./run_tests.sh ${RUNTESTFLAGS} $(TEST_SUITE)
 
 test-all: jshint test
 
 coverage:
-	./node_modules/nyc/bin/nyc.js npm test
+	@RUNTESTFLAGS=--with-coverage make test
 
-.PHONY: check test coverage
+.PHONY: check test test-all coverage
