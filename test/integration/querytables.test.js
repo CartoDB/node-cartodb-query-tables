@@ -303,6 +303,26 @@ $quoted$`);
             });
         });
 
+        it('should work with unimported CDB_TableMetadata', function(done) {
+
+            const params = {};
+            const readOnly = false;
+            connection.query(`DROP FOREIGN TABLE local_fdw.CDB_TableMetadata`, params, (err) => {
+                assert.ok(!err, err);
+                QueryTables.getQueryMetadataModel(
+                        connection,
+                        'SELECT * FROM local_fdw.remote_table;',
+                        function (err, result) {
+                    assert.ok(!err, err);
+                    assert.equal(result.getCacheChannel(), "cartodb_query_tables_fdw:local_fdw.remote_table");
+                    const fallbackValue = 123456789;
+                    assert.equal(result.getLastUpdatedAt(fallbackValue), fallbackValue);
+                    return done();
+                });
+            }, readOnly);
+
+        });
+
         it('should not crash with syntax errors (INTO)', function(done) {
 
             QueryTables.getQueryMetadataModel(connection,

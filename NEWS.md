@@ -1,3 +1,8 @@
+# Version 0.6.1
+
+Released 2019-XX-XX
+  * querytables.js: Make having a remote metadata table optional
+
 # Version 0.6.0
 
 Released 2019-09-13
