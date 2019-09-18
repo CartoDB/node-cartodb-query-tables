@@ -1,6 +1,6 @@
 # Version 0.6.2
 
-Released 2019-09-16
+Released 2019-09-18
   * getQueryMetadataModel: Serialize SQL requests
 
 # Version 0.6.1
