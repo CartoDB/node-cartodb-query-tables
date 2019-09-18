@@ -1,3 +1,8 @@
+# Version 0.6.3
+
+Released 2019-09-18
+  * getQueryMetadataModel: Serialize SQL requests using async / await
+
 # Version 0.6.2
 
 Released 2019-09-18
