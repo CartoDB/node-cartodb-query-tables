@@ -342,6 +342,28 @@ $quoted$`);
             });
         });
 
+        it('should error with an invalid query at the end', function(done) {
+
+            QueryTables.getQueryMetadataModel(connection,
+                        `SELECT * from t1;
+                         SELECT * FROM table_that_does_not_exists`, function (err) {
+                assert.ok(err);
+                return done();
+            });
+        });
+
+        it('should not crash with multiple invalid queries', function(done) {
+
+            QueryTables.getQueryMetadataModel(connection,
+                        `SELECT * from t1;
+                         SELECT * FROM table_that_does_not_exists;
+                         SELECT * FROM table_that_does_not_exists;
+                         SELECT * FROM table_that_does_not_exists;
+                         SELECT * FROM table_that_does_not_exists`, function (err) {
+                assert.ok(err);
+                return done();
+            });
+        });
 
         const tokens = ['pixel_width', 'pixel_height', 'scale_denominator'];
         tokens.forEach(token => {
