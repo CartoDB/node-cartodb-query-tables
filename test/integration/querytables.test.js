@@ -4,6 +4,7 @@ const assert = require('assert');
 const queryTables = require('../../lib/querytables');
 const SubstitutionTokens = require('../../lib/utils/substitution_tokens');
 const PSQL = require('cartodb-psql');
+const { postgres: databaseConfig } = require('../test_config');
 
 describe('QueryTables', function() {
 
@@ -27,7 +28,7 @@ describe('QueryTables', function() {
 
     /* Auxiliar function to create a database connection */
     function createDBConnection() {
-        const dbParams = Object.assign({}, require('../test_config').postgres);
+        const dbParams = Object.assign({}, databaseConfig);
         const dbPoolParams = {};
         let connection;
         assert.doesNotThrow(() => { connection = new PSQL(dbParams, dbPoolParams);});
@@ -37,7 +38,7 @@ describe('QueryTables', function() {
 
     /* Auxiliar function to create a connection to the FDW database */
     function createFDWDBConnection() {
-        const dbParams = Object.assign({}, require('../test_config').postgres);
+        const dbParams = Object.assign({}, databaseConfig);
         dbParams.dbname = dbParams.fdw_dbname;
         const dbPoolParams = {};
         let connection;
