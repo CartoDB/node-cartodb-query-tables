@@ -7,7 +7,7 @@ const PSQL = require('cartodb-psql');
 const { postgres: databaseConfig } = require('../test_config');
 
 /* Auxiliar function to create a mocked connection */
-function createMockConnection(err, rows) {
+function createMockConnection (err, rows) {
     return {
         query: function (sql, params, callback, readonly) {
             if (typeof params === 'function') {
@@ -25,7 +25,7 @@ function createMockConnection(err, rows) {
 }
 
 /* Auxiliar function to create a database connection */
-function createDBConnection() {
+function createDBConnection () {
     const dbParams = Object.assign({}, databaseConfig);
     const dbPoolParams = {};
 
@@ -33,7 +33,7 @@ function createDBConnection() {
 }
 
 /* Auxiliar function to create a connection to the FDW database */
-function createFDWDBConnection() {
+function createFDWDBConnection () {
     const dbParams = Object.assign({}, databaseConfig);
     dbParams.dbname = dbParams.fdw_dbname;
     const dbPoolParams = {};
@@ -43,7 +43,7 @@ function createFDWDBConnection() {
 
 describe('queryTables', function () {
     describe('.getQueryStatements()', function () {
-        /* These tests come from cartodb-postgresql (test/CDB_QueryStatementsTest.sql) */
+    /* These tests come from cartodb-postgresql (test/CDB_QueryStatementsTest.sql) */
         it('Should work with a standard query', function () {
             const s = queryTables.getQueryStatements('SELECT * FROM geometry_columns;');
             assert.strictEqual(s.length, 1);
@@ -69,9 +69,9 @@ describe('queryTables', function () {
                 SELECT 2 = 3;
             `);
             assert.strictEqual(s.length, 3);
-            assert.strictEqual(s[0], `SELECT * FROM geometry_columns`);
-            assert.strictEqual(s[1], `SELECT 1`);
-            assert.strictEqual(s[2], `SELECT 2 = 3`);
+            assert.strictEqual(s[0], 'SELECT * FROM geometry_columns');
+            assert.strictEqual(s[1], 'SELECT 1');
+            assert.strictEqual(s[2], 'SELECT 2 = 3');
         });
 
         it('Should work with quoted commands', function () {
@@ -89,8 +89,8 @@ describe('queryTables', function () {
                 SELECT 5;
             `);
             assert.strictEqual(s.length, 4);
-            assert.strictEqual(s[0], `CREATE table "my'tab;le" ("$" int)`);
-            assert.strictEqual(s[1], `SELECT '1','$$', '$hello$', "$" FROM "my'tab;le"`);
+            assert.strictEqual(s[0], 'CREATE table "my\'tab;le" ("$" int)');
+            assert.strictEqual(s[1], 'SELECT \'1\',\'$$\', \'$hello$\', "$" FROM "my\'tab;le"');
             assert.strictEqual(s[2], `
                 CREATE function "hi'there" ("'" text default '$')
                 returns void as $h$
@@ -101,7 +101,7 @@ describe('queryTables', function () {
                 end;
                 $h$ language 'plpgsql'
             `.trim());
-            assert.strictEqual(s[3], `SELECT 5`);
+            assert.strictEqual(s[3], 'SELECT 5');
         });
 
         it('Should work with quoted inserts', function () {
@@ -110,8 +110,8 @@ describe('queryTables', function () {
                 SELECT $qu;oted$ hi $qu;oted$;
             `);
             assert.strictEqual(s.length, 2);
-            assert.strictEqual(s[0], `INSERT INTO "my''""t" values ('''','""'';;')`);
-            assert.strictEqual(s[1], `SELECT $qu;oted$ hi $qu;oted$`);
+            assert.strictEqual(s[0], 'INSERT INTO "my\'\'""t" values (\'\'\'\',\'""\'\';;\')');
+            assert.strictEqual(s[1], 'SELECT $qu;oted$ hi $qu;oted$');
         });
 
         it('Should work with line breaks mid sentence', function () {
@@ -187,13 +187,13 @@ describe('queryTables', function () {
 
             fdwConnection.query(configureRemoteDatabaseQueries, params, (err) => {
                 assert.ifError(err);
-                const { user, password, host, port, fdw_dbname: fdwDatabaseName} = databaseConfig;
+                const { user, password, host, port, fdw_dbname: fdwDatabaseName } = databaseConfig;
                 const configureLocalDatabaseQueries = `
                     CREATE TABLE t2(a integer);
                     CREATE TABLE t1(a integer);
                     CREATE TABLE t3(b text);
                     CREATE TABLE "t with space" (a integer);
-                    CREATE TABLE "tablena\'me" (a integer);
+                    CREATE TABLE "tablena'me" (a integer);
 
                     CREATE SCHEMA IF NOT EXISTS local_fdw;
                     CREATE EXTENSION postgres_fdw;
@@ -228,7 +228,7 @@ describe('queryTables', function () {
             fdwConnection.end();
         });
 
-        const { dbname: databaseName, fdw_dbname: fdwDatabaseName} = databaseConfig;
+        const { dbname: databaseName, fdw_dbname: fdwDatabaseName } = databaseConfig;
         const defaultUpdateAt = -12345;
         const queries = [
             {
@@ -323,7 +323,7 @@ describe('queryTables', function () {
         });
 
         it('should work with unimported CDB_TableMetadata', function (done) {
-            const dropQuery = `DROP FOREIGN TABLE local_fdw.CDB_TableMetadata`;
+            const dropQuery = 'DROP FOREIGN TABLE local_fdw.CDB_TableMetadata';
             const params = {};
             const readOnly = false;
             connection.query(dropQuery, params, (err) => {
@@ -331,7 +331,7 @@ describe('queryTables', function () {
                 const selectQuery = 'SELECT * FROM local_fdw.remote_table;';
                 queryTables.getQueryMetadataModel(connection, selectQuery, function (err, result) {
                     assert.ifError(err);
-                    assert.strictEqual(result.getCacheChannel(), "cartodb_query_tables_fdw:local_fdw.remote_table");
+                    assert.strictEqual(result.getCacheChannel(), 'cartodb_query_tables_fdw:local_fdw.remote_table');
                     const fallbackValue = 123456789;
                     assert.strictEqual(result.getLastUpdatedAt(fallbackValue), fallbackValue);
                     return done();

@@ -230,10 +230,10 @@ describe('QueryMetadata', function () {
             const tables = new QueryMetadata([
                 {
                     dbname: 'db1',
-                    schema_name:'public',
+                    schema_name: 'public',
                     table_name: 'tableone',
                     updated_at: new Date(12345678)
-                },
+                }
             ]);
             assert.deepStrictEqual(tables.key(), ['t:8ny9He']);
         });
@@ -245,7 +245,7 @@ describe('QueryMetadata', function () {
                     schema_name: '"sch-ema"',
                     table_name: 'tableone',
                     updated_at: new Date(12345678)
-                },
+                }
             ]);
             assert.deepStrictEqual(tables.key(), ['t:oVg75u']);
         });

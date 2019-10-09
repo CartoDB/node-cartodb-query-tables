@@ -35,7 +35,7 @@ describe('SubstitutionTokens', function () {
         it('The defaults are used when a value is not passed for a token', function () {
             const sql = 'Select !scale_denominator! * ST_Area(geom) from my_table where the_geom && !bbox!';
             const values = {
-                scale_denominator : '10'
+                scale_denominator: '10'
             };
             const replaced = SubstitutionTokens.replace(sql, values);
             assert.ok(replaced.includes('10'));
@@ -48,19 +48,19 @@ describe('SubstitutionTokens', function () {
 
         tokens.forEach(token => {
             it(`Replaces Mapnik token: ${token}`, function () {
-                const replaced = SubstitutionTokens.replaceXYZ(`!${token}!`, { z: 1, x : 1, y : 0 });
+                const replaced = SubstitutionTokens.replaceXYZ(`!${token}!`, { z: 1, x: 1, y: 0 });
                 assert.ok(!SubstitutionTokens.hasTokens(replaced));
             });
         });
 
         it('Throws on unsupported invalid tile', function () {
             const sql = 'Select !scale_denominator! * ST_Area(geom) from my_table where the_geom && !bbox!';
-            assert.throws(() => SubstitutionTokens.replaceXYZ(sql, { z: 0.4, x : 4 }));
+            assert.throws(() => SubstitutionTokens.replaceXYZ(sql, { z: 0.4, x: 4 }));
         });
 
         it('Works with just the zoom', function () {
             const sql = 'Select !scale_denominator! * ST_Area(geom) from my_table';
-            assert.ok(!SubstitutionTokens.hasTokens(SubstitutionTokens.replaceXYZ(sql, { z : 1 } )));
+            assert.ok(!SubstitutionTokens.hasTokens(SubstitutionTokens.replaceXYZ(sql, { z: 1 })));
         });
 
         it('Works without arguments', function () {
@@ -70,7 +70,7 @@ describe('SubstitutionTokens', function () {
 
         it('Accepts bbox argument', function () {
             const sql = 'Select !scale_denominator! * ST_Area(geom) from my_table where the_geom && !bbox!';
-            assert.ok(SubstitutionTokens.replaceXYZ(sql, { bbox : 'DUMMY' }).includes('DUMMY'));
+            assert.ok(SubstitutionTokens.replaceXYZ(sql, { bbox: 'DUMMY' }).includes('DUMMY'));
         });
     });
 });
