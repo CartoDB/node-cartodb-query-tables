@@ -19,7 +19,7 @@ describe('QueryMetadata', function () {
                 }
             ]);
 
-            assert.equal(tables.getCacheChannel(), 'db1:public.tableone,public.tabletwo');
+            assert.strictEqual(tables.getCacheChannel(), 'db1:public.tableone,public.tabletwo');
         });
 
         it('should support tables coming from different databases', function () {
@@ -41,7 +41,7 @@ describe('QueryMetadata', function () {
                 }
             ]);
 
-            assert.equal(tables.getCacheChannel(), 'db1:public.tableone,public.tabletwo;;db2:public.tablethree');
+            assert.strictEqual(tables.getCacheChannel(), 'db1:public.tableone,public.tabletwo;;db2:public.tablethree');
         });
 
         describe('with skipNotUpdatedAtTables enabled', function () {
@@ -154,7 +154,7 @@ describe('QueryMetadata', function () {
                 it('should get an cache channel skipping tables with no updated_at', function () {
                     const tables = new QueryMetadata(scenario.tables);
                     const cacheChannel = tables.getCacheChannel(skipNotUpdatedAtTables);
-                    assert.equal(cacheChannel, scenario.expectedCacheChannel);
+                    assert.strictEqual(cacheChannel, scenario.expectedCacheChannel);
                 });
             });
         });
@@ -182,7 +182,7 @@ describe('QueryMetadata', function () {
                     updated_at: null
                 }
             ]);
-            assert.equal(tables.getLastUpdatedAt(), 1234567891);
+            assert.strictEqual(tables.getLastUpdatedAt(), 1234567891);
         });
 
         it('getSafeLastUpdatedAt should return fallback date if a table date is unknown', function () {
@@ -194,12 +194,12 @@ describe('QueryMetadata', function () {
                     updated_at: null
                 }
             ]);
-            assert.equal(tables.getLastUpdatedAt('FALLBACK'), 'FALLBACK');
+            assert.strictEqual(tables.getLastUpdatedAt('FALLBACK'), 'FALLBACK');
         });
 
         it('getSafeLastUpdatedAt should return fallback date if no tables were found', function () {
             const tables = new QueryMetadata([]);
-            assert.equal(tables.getLastUpdatedAt('FALLBACK'), 'FALLBACK');
+            assert.strictEqual(tables.getLastUpdatedAt('FALLBACK'), 'FALLBACK');
         });
     });
 
@@ -221,9 +221,9 @@ describe('QueryMetadata', function () {
             ]);
             const keys = tables.key();
 
-            assert.equal(keys.length, 2);
-            assert.equal(keys[0].length, KEY_LENGTH);
-            assert.equal(keys[1].length, KEY_LENGTH);
+            assert.strictEqual(keys.length, 2);
+            assert.strictEqual(keys[0].length, KEY_LENGTH);
+            assert.strictEqual(keys[1].length, KEY_LENGTH);
         });
 
         it('should return proper surrogate-key (db:schema.table)', function () {
@@ -235,8 +235,9 @@ describe('QueryMetadata', function () {
                     updated_at: new Date(12345678)
                 },
             ]);
-            assert.deepEqual(tables.key(), ['t:8ny9He']);
+            assert.strictDeepEqual(tables.key(), ['t:8ny9He']);
         });
+
         it('should keep escaped tables escaped (db:"sch-ema".table)', function () {
             const tables = new QueryMetadata([
                 {
@@ -246,7 +247,7 @@ describe('QueryMetadata', function () {
                     updated_at: new Date(12345678)
                 },
             ]);
-            assert.deepEqual(tables.key(), ['t:oVg75u']);
+            assert.strictDeepEqual(tables.key(), ['t:oVg75u']);
         });
 
         describe('with skipNotUpdatedAtTables enabled', function () {
@@ -359,8 +360,8 @@ describe('QueryMetadata', function () {
                 it('should get an array for multiple tables skipping the ones with no updated_at', function () {
                     const queryMetadata = new QueryMetadata(tables);
                     const keys = queryMetadata.key(skipNotUpdatedAtTables);
-                    assert.equal(keys.length, expectedLength);
-                    keys.forEach(key => assert.equal(key.length, KEY_LENGTH));
+                    assert.strictEqual(keys.length, expectedLength);
+                    keys.forEach(key => assert.strictEqual(key.length, KEY_LENGTH));
                 });
             });
         });
@@ -821,7 +822,7 @@ describe('QueryMetadata', function () {
             it(`should get ${arrayLengthCond} by ${updatedAtCond} and ${analysisTablesCond}`, function () {
                 const queryMetadata = new QueryMetadata(result);
                 const tables = queryMetadata.getTables(skipNotUpdatedAtTables, skipAnalysisCachedTables);
-                assert.equal(tables.length, expectedLength);
+                assert.strictEqual(tables.length, expectedLength);
             });
         });
     });
