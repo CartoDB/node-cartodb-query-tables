@@ -258,46 +258,74 @@ describe('QueryTables', function() {
 
         const defaultUpdateAt = -12345;
         const queries = [
-                { sql : 'TABLE t1;',
-                  channel : `${db.dbname}:public.t1`,
-                  updated_at : t1_updateTime },
-                { sql : 'SELECT * FROM t2;',
-                  channel : `${db.dbname}:public.t2`,
-                  updated_at : defaultUpdateAt },
-                { sql : 'SELECT * FROM t2',
-                  channel : `${db.dbname}:public.t2`,
-                  updated_at : defaultUpdateAt },
-                { sql : 'SELECT * FROM t1 UNION ALL SELECT * from t2;',
-                  channel : `${db.dbname}:public.t2,public.t1`,
-                  updated_at : t1_updateTime },
-                { sql : 'SELECT * FROM t1 NATURAL JOIN "t with space";',
-                  channel : `${db.dbname}:public.t1,public."t with space"`,
-                  updated_at : t1_updateTime },
-                { sql : 'WITH s1 AS (SELECT * FROM t1) SELECT * FROM t2;',
-                  channel : `${db.dbname}:public.t2`},
-                { sql : 'SELECT 1;',
-                  channel : '' },
-                { sql : 'TABLE t1; TABLE t2;',
-                  channel : `${db.dbname}:public.t2,public.t1`,
-                  updated_at : t1_updateTime },
-                { sql : "Select * from t3 where b = ';'; TABLE t2",
-                  channel : `${db.dbname}:public.t2,public.t3`,
-                  updated_at : t3_updateTime },
-                { sql : 'TABLE t1; TABLE t1;',
-                  channel : `${db.dbname}:public.t1`,
-                  updated_at : t1_updateTime },
-                { sql : 'SELECT * FROM "tablena\'me";',
-                  channel : `${db.dbname}:public."tablena'me"`,
-                  updated_at : tablename_updateTime },
-                { sql : 'SELECT * FROM local_fdw.remote_table',
-                  channel : `${db.fdw_dbname}:local_fdw.remote_table`,
-                  updated_at : remote_updateTime },
-                { sql : 'SELECT * FROM local_fdw.remote_table NATURAL JOIN public.t1',
-                  channel : `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
-                  updated_at : remote_updateTime },
-                { sql : 'SELECT * FROM public.t1 NATURAL JOIN local_fdw.remote_table',
-                  channel : `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
-                  updated_at : remote_updateTime }
+            {
+                sql: 'TABLE t1;',
+                channel: `${db.dbname}:public.t1`,
+                updated_at: t1_updateTime
+            },
+            {
+                sql: 'SELECT * FROM t2;',
+                channel: `${db.dbname}:public.t2`,
+                updated_at: defaultUpdateAt
+            },
+            {
+                sql: 'SELECT * FROM t2',
+                channel: `${db.dbname}:public.t2`,
+                updated_at: defaultUpdateAt
+            },
+            {
+                sql: 'SELECT * FROM t1 UNION ALL SELECT * from t2;',
+                channel: `${db.dbname}:public.t2,public.t1`,
+                updated_at: t1_updateTime
+            },
+            {
+                sql: 'SELECT * FROM t1 NATURAL JOIN "t with space";',
+                channel: `${db.dbname}:public.t1,public."t with space"`,
+                updated_at: t1_updateTime
+            },
+            {
+                sql: 'WITH s1 AS (SELECT * FROM t1) SELECT * FROM t2;',
+                channel: `${db.dbname}:public.t2`
+            },
+            {
+                sql: 'SELECT 1;',
+                channel: ''
+            },
+            {
+                sql: 'TABLE t1; TABLE t2;',
+                channel: `${db.dbname}:public.t2,public.t1`,
+                updated_at: t1_updateTime
+            },
+            {
+                sql: "Select * from t3 where b = ';'; TABLE t2",
+                channel: `${db.dbname}:public.t2,public.t3`,
+                updated_at: t3_updateTime
+            },
+            {
+                sql: 'TABLE t1; TABLE t1;',
+                channel: `${db.dbname}:public.t1`,
+                updated_at: t1_updateTime
+            },
+            {
+                sql: 'SELECT * FROM "tablena\'me";',
+                channel: `${db.dbname}:public."tablena'me"`,
+                updated_at: tablename_updateTime
+            },
+            {
+                sql: 'SELECT * FROM local_fdw.remote_table',
+                channel: `${db.fdw_dbname}:local_fdw.remote_table`,
+                updated_at: remote_updateTime
+            },
+            {
+                sql: 'SELECT * FROM local_fdw.remote_table NATURAL JOIN public.t1',
+                channel: `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
+                updated_at: remote_updateTime
+            },
+            {
+                sql: 'SELECT * FROM public.t1 NATURAL JOIN local_fdw.remote_table',
+                channel: `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
+                updated_at: remote_updateTime
+            }
         ];
 
         queries.forEach(q => {
