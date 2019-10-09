@@ -1,7 +1,7 @@
 'use strict';
 
 const assert = require('assert');
-const QueryTables = require('../../lib/querytables');
+const queryTables = require('../../lib/querytables');
 const SubstitutionTokens = require('../../lib/utils/substitution_tokens');
 const PSQL = require('cartodb-psql');
 
@@ -60,28 +60,28 @@ describe('QueryTables', function() {
         });
 
         it('Should work with a standard query', function(done) {
-            const s = QueryTables.getQueryStatements('SELECT * FROM geometry_columns;');
+            const s = queryTables.getQueryStatements('SELECT * FROM geometry_columns;');
             assert.equal(s.length, 1);
             assert.equal(s[0], 'SELECT * FROM geometry_columns');
             done();
         });
 
         it('Should work with a query without ";"', function(done) {
-            const s = QueryTables.getQueryStatements('SELECT * FROM geometry_columns');
+            const s = queryTables.getQueryStatements('SELECT * FROM geometry_columns');
             assert.equal(s.length, 1);
             assert.equal(s[0], 'SELECT * FROM geometry_columns');
             done();
         });
 
         it('Should work with a query starting with ";"', function(done) {
-            const s = QueryTables.getQueryStatements(';;;;SELECT * FROM geometry_columns');
+            const s = queryTables.getQueryStatements(';;;;SELECT * FROM geometry_columns');
             assert.equal(s.length, 1);
             assert.equal(s[0], 'SELECT * FROM geometry_columns');
             done();
         });
 
         it('Should work with multiqueries', function(done) {
-            const s = QueryTables.getQueryStatements(`
+            const s = queryTables.getQueryStatements(`
                 SELECT * FROM geometry_columns;
                 SELECT 1;
                 SELECT 2 = 3;
@@ -95,7 +95,7 @@ describe('QueryTables', function() {
         });
 
         it('Should work with quoted commands', function(done) {
-            const s = QueryTables.getQueryStatements(`
+            const s = queryTables.getQueryStatements(`
                 CREATE table "my'tab;le" ("$" int);
                 SELECT '1','$$', '$hello$', "$" FROM "my'tab;le";
                 CREATE function "hi'there" ("'" text default '$')
@@ -126,7 +126,7 @@ describe('QueryTables', function() {
         });
 
         it('Should work with quoted inserts', function(done) {
-            const s = QueryTables.getQueryStatements(`
+            const s = queryTables.getQueryStatements(`
                 INSERT INTO "my''""t" values ('''','""'';;');
                 SELECT $qu;oted$ hi $qu;oted$;
             `);
@@ -137,7 +137,7 @@ describe('QueryTables', function() {
         });
 
         it('Should work with line breaks mid sentence', function(done) {
-            const s = QueryTables.getQueryStatements(`
+            const s = queryTables.getQueryStatements(`
                 SELECT
                 1 ; SELECT
                 2
@@ -160,7 +160,7 @@ describe('QueryTables', function() {
         // The actual result is not correct, so if the function
         // ever gets fixed check if it's better
         it('Should not crash with illegal sql', function(done) {
-            const s = QueryTables.getQueryStatements(`
+            const s = queryTables.getQueryStatements(`
                 /a
                 $b$
                 $c$d
@@ -171,7 +171,7 @@ describe('QueryTables', function() {
         });
 
         it('Should work with quoted values', function(done) {
-            const s = QueryTables.getQueryStatements(`
+            const s = queryTables.getQueryStatements(`
                 SELECT $quoted$ hi
                 $quoted$;
             `);
@@ -330,7 +330,7 @@ describe('QueryTables', function() {
 
         queries.forEach(q => {
             it('should return a DatabaseTables model (' + q.sql + ')', function(done) {
-                QueryTables.getQueryMetadataModel(connection, q.sql, function (err, result) {
+                queryTables.getQueryMetadataModel(connection, q.sql, function (err, result) {
                     assert.ok(!err, err);
                     assert.ok(result);
                     assert.equal(result.getCacheChannel(), q.channel);
@@ -342,7 +342,7 @@ describe('QueryTables', function() {
         });
 
         it('should not crash with syntax errors (DDL)', function(done) {
-            QueryTables.getQueryMetadataModel(connection, 'DROP TABLE t1;', function (err, result) {
+            queryTables.getQueryMetadataModel(connection, 'DROP TABLE t1;', function (err, result) {
                 assert.ok(!err, err);
                 assert.ok(result);
                 return done();
@@ -354,7 +354,7 @@ describe('QueryTables', function() {
             const readOnly = false;
             connection.query(`DROP FOREIGN TABLE local_fdw.CDB_TableMetadata`, params, (err) => {
                 assert.ok(!err, err);
-                QueryTables.getQueryMetadataModel(
+                queryTables.getQueryMetadataModel(
                         connection,
                         'SELECT * FROM local_fdw.remote_table;',
                         function (err, result) {
@@ -369,7 +369,7 @@ describe('QueryTables', function() {
         });
 
         it('should not crash with syntax errors (INTO)', function(done) {
-            QueryTables.getQueryMetadataModel(connection,
+            queryTables.getQueryMetadataModel(connection,
                         'SELECT generate_series(1,10) InTO t1', function (err, result) {
                 assert.ok(!err, err);
                 assert.ok(result);
@@ -378,7 +378,7 @@ describe('QueryTables', function() {
         });
 
         it('should error with an invalid query', function(done) {
-            QueryTables.getQueryMetadataModel(connection,
+            queryTables.getQueryMetadataModel(connection,
                         'SELECT * FROM table_that_does_not_exists', function (err) {
                 assert.ok(err);
                 return done();
@@ -386,7 +386,7 @@ describe('QueryTables', function() {
         });
 
         it('should error with an invalid query at the end', function(done) {
-            QueryTables.getQueryMetadataModel(connection,
+            queryTables.getQueryMetadataModel(connection,
                         `SELECT * from t1;
                          SELECT * FROM table_that_does_not_exists`, function (err) {
                 assert.ok(err);
@@ -395,7 +395,7 @@ describe('QueryTables', function() {
         });
 
         it('should not crash with multiple invalid queries', function(done) {
-            QueryTables.getQueryMetadataModel(connection,
+            queryTables.getQueryMetadataModel(connection,
                         `SELECT * from t1;
                          SELECT * FROM table_that_does_not_exists;
                          SELECT * FROM table_that_does_not_exists;
@@ -411,7 +411,7 @@ describe('QueryTables', function() {
             it('should not call Postgres with token: ' + token, function(done) {
                 const query = 'Select 1 from t1 where 1 != ' + '!' + token + '!';
 
-                QueryTables.getQueryMetadataModel(connection, query, function (err, result) {
+                queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                     assert.ok(!err, err);
                     assert.ok(result);
                     assert.equal(result.getCacheChannel(), `${db.dbname}:public.t1`);
@@ -423,7 +423,7 @@ describe('QueryTables', function() {
         it('should not call Postgres with token: bbox', function(done) {
             const query = 'Select 1 from t1 where 1 != ST_Area(!bbox!)';
 
-            QueryTables.getQueryMetadataModel(connection, query, function (err, result) {
+            queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                 assert.ok(!err, err);
                 assert.ok(result);
                 assert.equal(result.getCacheChannel(), `${db.dbname}:public.t1`);
@@ -434,7 +434,7 @@ describe('QueryTables', function() {
         it('should rethrow db errors', function(done) {
             const mockConnection = createMockConnection(new Error('foo-bar-error'));
 
-            QueryTables.getQueryMetadataModel(mockConnection, 'foo-bar-query', function (err) {
+            queryTables.getQueryMetadataModel(mockConnection, 'foo-bar-query', function (err) {
                 assert.ok(err);
                 assert.ok(err.message.match(/foo-bar-error/));
                 return done();
