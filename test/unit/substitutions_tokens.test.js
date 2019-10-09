@@ -13,7 +13,7 @@ describe('SubstitutionTokens', function () {
         });
 
         it('Returns false when no tokens are found', function () {
-            assert.equal(SubstitutionTokens.hasTokens('wadus wadus wadus'), false);
+            assert.strictEqual(SubstitutionTokens.hasTokens('wadus wadus wadus'), false);
         });
     });
 
@@ -23,7 +23,7 @@ describe('SubstitutionTokens', function () {
             it(`Replaces Mapnik token: ${token}`, function () {
                 const replaceValues = {};
                 replaceValues[token] = 'wadus';
-                assert.equal(SubstitutionTokens.replace(`!${token}!`, replaceValues), replaceValues[token]);
+                assert.strictEqual(SubstitutionTokens.replace(`!${token}!`, replaceValues), replaceValues[token]);
             });
         });
 
