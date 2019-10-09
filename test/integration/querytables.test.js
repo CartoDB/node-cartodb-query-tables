@@ -44,16 +44,6 @@ function createFDWDBConnection() {
 describe('queryTables', function () {
     describe('.getQueryStatements()', function () {
         /* These tests come from cartodb-postgresql (test/CDB_QueryStatementsTest.sql) */
-        let connection;
-
-        before(function () {
-            connection = createDBConnection();
-        });
-
-        after(function () {
-            connection.end();
-        });
-
         it('Should work with a standard query', function () {
             const s = queryTables.getQueryStatements('SELECT * FROM geometry_columns;');
             assert.equal(s.length, 1);
