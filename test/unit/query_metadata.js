@@ -4,8 +4,7 @@ const assert = require('assert');
 const QueryMetadata = require('../../lib/models/query_metadata');
 
 describe('QueryMetadata', function() {
-
-    describe('getCacheChannel', function() {
+    describe('.getCacheChannel()', function() {
         it('should group cache-channel tables by database name', function() {
             var tables = new QueryMetadata([
                 {dbname: 'db1', schema_name: 'public', table_name: 'tableone'},
@@ -25,7 +24,8 @@ describe('QueryMetadata', function() {
             assert.equal(tables.getCacheChannel(), 'db1:public.tableone,public.tabletwo;;db2:public.tablethree');
         });
 
-        describe('skipNotUpdatedAtTables', function() {
+        describe('with skipNotUpdatedAtTables enabled', function () {
+            const skipNotUpdatedAtTables = true;
             var scenarios = [
                 {
                     tables: [
@@ -75,15 +75,14 @@ describe('QueryMetadata', function() {
                 it('should get an cache channel skipping tables with no updated_at', function() {
                     var tables = new QueryMetadata(scenario.tables);
 
-                    var cacheChannel = tables.getCacheChannel(true);
+                    var cacheChannel = tables.getCacheChannel(skipNotUpdatedAtTables);
                     assert.equal(cacheChannel, scenario.expectedCacheChannel);
                 });
             });
         });
     });
 
-    describe('getLastUpdatedAt', function() {
-
+    describe('.getLastUpdatedAt()', function() {
         it('should return latest of the known dates', function() {
             var tables = new QueryMetadata([
                 {dbname: 'db1', schema_name: 'public', table_name: 'tableone', updated_at: new Date(12345678)},
@@ -106,8 +105,7 @@ describe('QueryMetadata', function() {
         });
     });
 
-    describe('key', function() {
-
+    describe('.key()', function() {
         var KEY_LENGTH = 8;
 
         it('should get an array of keys for multiple tables', function() {
@@ -135,7 +133,8 @@ describe('QueryMetadata', function() {
             assert.deepEqual(tables.key(), ['t:oVg75u']);
         });
 
-        describe('skipNotUpdatedAtTables', function() {
+        describe('with skipNotUpdatedAtTables enabled', function () {
+            const skipNotUpdatedAtTables = true;
             var scenarios = [
                 {
                     tables: [
@@ -185,7 +184,7 @@ describe('QueryMetadata', function() {
                 it('should get an array for multiple tables skipping the ones with no updated_at', function() {
                     var tables = new QueryMetadata(scenario.tables);
 
-                    var keys = tables.key(true);
+                    var keys = tables.key(skipNotUpdatedAtTables);
                     assert.equal(keys.length, scenario.expectedLength);
                     keys.forEach(function(key) {
                         assert.equal(key.length, KEY_LENGTH);
@@ -195,7 +194,7 @@ describe('QueryMetadata', function() {
         });
     });
 
-    describe('getTables', function () {
+    describe('.getTables()', function () {
         const scenarios = [
             {
                 result: [
