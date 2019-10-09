@@ -6,8 +6,8 @@ all:
 clean:
 	@rm -rf ./node_modules
 
-jshint:
-	@./node_modules/.bin/jshint lib/ test/
+lint:
+	@./node_modules/.bin/eslint lib/**/*.js test/**/*.js
 
 TEST_SUITE := $(shell find test/{integration,unit} -name "*.js")
 
@@ -18,9 +18,9 @@ check: test
 test:
 	./run_tests.sh ${RUNTESTFLAGS} $(TEST_SUITE)
 
-test-all: jshint test
+test-all: lint test
 
 coverage:
 	@RUNTESTFLAGS=--with-coverage make test
 
-.PHONY: check test test-all coverage
+.PHONY: check lint test test-all coverage

@@ -27,7 +27,9 @@
   },
   "devDependencies": {
     "cartodb-psql": "0.14.0",
-    "jshint": "^2.9.1",
+    "eslint": "^6.5.1",
+    "eslint-config-airbnb-base": "^14.0.0",
+    "eslint-plugin-import": "^2.18.2",
     "mocha": "^6.2.0",
     "nyc": "^14.1.1"
   },
