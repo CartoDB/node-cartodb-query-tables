@@ -212,7 +212,7 @@ describe('QueryTables', function() {
             `;
 
             fdw_connection.query(configureRemoteDatabaseQueries, params, (err) => {
-                assert.ok(!err, err);
+                assert.ifError(err);
 
                 const configureLocalDatabaseQueries = `
                     CREATE TABLE t2(a integer);
@@ -244,7 +244,7 @@ describe('QueryTables', function() {
                 `;
 
                 connection.query(configureLocalDatabaseQueries, params, (err) => {
-                    assert.ok(!err, err);
+                    assert.ifError(err);
                     done();
                 }, readOnly);
             }, readOnly);
@@ -331,7 +331,7 @@ describe('QueryTables', function() {
         queries.forEach(q => {
             it('should return a DatabaseTables model (' + q.sql + ')', function(done) {
                 queryTables.getQueryMetadataModel(connection, q.sql, function (err, result) {
-                    assert.ok(!err, err);
+                    assert.ifError(err);
                     assert.ok(result);
                     assert.equal(result.getCacheChannel(), q.channel);
                     assert.equal(result.getLastUpdatedAt(defaultUpdateAt),
@@ -343,7 +343,7 @@ describe('QueryTables', function() {
 
         it('should not crash with syntax errors (DDL)', function(done) {
             queryTables.getQueryMetadataModel(connection, 'DROP TABLE t1;', function (err, result) {
-                assert.ok(!err, err);
+                assert.ifError(err);
                 assert.ok(result);
                 return done();
             });
@@ -353,12 +353,12 @@ describe('QueryTables', function() {
             const params = {};
             const readOnly = false;
             connection.query(`DROP FOREIGN TABLE local_fdw.CDB_TableMetadata`, params, (err) => {
-                assert.ok(!err, err);
+                assert.ifError(err);
                 queryTables.getQueryMetadataModel(
                         connection,
                         'SELECT * FROM local_fdw.remote_table;',
                         function (err, result) {
-                    assert.ok(!err, err);
+                    assert.ifError(err);
                     assert.equal(result.getCacheChannel(), "cartodb_query_tables_fdw:local_fdw.remote_table");
                     const fallbackValue = 123456789;
                     assert.equal(result.getLastUpdatedAt(fallbackValue), fallbackValue);
@@ -371,7 +371,7 @@ describe('QueryTables', function() {
         it('should not crash with syntax errors (INTO)', function(done) {
             queryTables.getQueryMetadataModel(connection,
                         'SELECT generate_series(1,10) InTO t1', function (err, result) {
-                assert.ok(!err, err);
+                assert.ifError(err);
                 assert.ok(result);
                 return done();
             });
@@ -412,7 +412,7 @@ describe('QueryTables', function() {
                 const query = 'Select 1 from t1 where 1 != ' + '!' + token + '!';
 
                 queryTables.getQueryMetadataModel(connection, query, function (err, result) {
-                    assert.ok(!err, err);
+                    assert.ifError(err);
                     assert.ok(result);
                     assert.equal(result.getCacheChannel(), `${db.dbname}:public.t1`);
                     return done();
@@ -424,7 +424,7 @@ describe('QueryTables', function() {
             const query = 'Select 1 from t1 where 1 != ST_Area(!bbox!)';
 
             queryTables.getQueryMetadataModel(connection, query, function (err, result) {
-                assert.ok(!err, err);
+                assert.ifError(err);
                 assert.ok(result);
                 assert.equal(result.getCacheChannel(), `${db.dbname}:public.t1`);
                 return done();
