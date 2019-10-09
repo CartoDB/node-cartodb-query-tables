@@ -9,7 +9,7 @@ const { postgres: databaseConfig } = require('../test_config');
 /* Auxiliar function to create a mocked connection */
 function createMockConnection(err, rows) {
     return {
-        query: function(sql, params, callback, readonly) {
+        query: function (sql, params, callback, readonly) {
             if (typeof params === 'function') {
                 readonly = callback;
                 callback = params;
@@ -41,8 +41,8 @@ function createFDWDBConnection() {
     return new PSQL(dbParams, dbPoolParams);
 }
 
-describe('queryTables', function() {
-    describe('.getQueryStatements()', function() {
+describe('queryTables', function () {
+    describe('.getQueryStatements()', function () {
         /* These tests come from cartodb-postgresql (test/CDB_QueryStatementsTest.sql) */
         let connection;
 
@@ -169,7 +169,7 @@ describe('queryTables', function() {
         });
     });
 
-    describe('.getQueryMetadataModel()', function() {
+    describe('.getQueryMetadataModel()', function () {
         let connection;
         let fdwConnection;
         const db = require('../test_config').postgres;
@@ -311,7 +311,7 @@ describe('queryTables', function() {
         ];
 
         queries.forEach(q => {
-            it('should return a DatabaseTables model (' + q.sql + ')', function(done) {
+            it('should return a DatabaseTables model (' + q.sql + ')', function (done) {
                 queryTables.getQueryMetadataModel(connection, q.sql, function (err, result) {
                     assert.ifError(err);
                     assert.ok(result);
@@ -323,7 +323,7 @@ describe('queryTables', function() {
             });
         });
 
-        it('should not crash with syntax errors (DDL)', function(done) {
+        it('should not crash with syntax errors (DDL)', function (done) {
             queryTables.getQueryMetadataModel(connection, 'DROP TABLE t1;', function (err, result) {
                 assert.ifError(err);
                 assert.ok(result);
@@ -331,7 +331,7 @@ describe('queryTables', function() {
             });
         });
 
-        it('should work with unimported CDB_TableMetadata', function(done) {
+        it('should work with unimported CDB_TableMetadata', function (done) {
             const dropQuery = `DROP FOREIGN TABLE local_fdw.CDB_TableMetadata`;
             const params = {};
             const readOnly = false;
@@ -348,7 +348,7 @@ describe('queryTables', function() {
             }, readOnly);
         });
 
-        it('should not crash with syntax errors (INTO)', function(done) {
+        it('should not crash with syntax errors (INTO)', function (done) {
             const query = 'SELECT generate_series(1,10) InTO t1';
             queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                 assert.ifError(err);
@@ -357,7 +357,7 @@ describe('queryTables', function() {
             });
         });
 
-        it('should error with an invalid query', function(done) {
+        it('should error with an invalid query', function (done) {
             const query = 'SELECT * FROM table_that_does_not_exists';
             queryTables.getQueryMetadataModel(connection, query, function (err) {
                 assert.ok(err);
@@ -365,7 +365,7 @@ describe('queryTables', function() {
             });
         });
 
-        it('should error with an invalid query at the end', function(done) {
+        it('should error with an invalid query at the end', function (done) {
             const queries = `
                 SELECT * from t1;
                 SELECT * FROM table_that_does_not_exists
@@ -376,7 +376,7 @@ describe('queryTables', function() {
             });
         });
 
-        it('should not crash with multiple invalid queries', function(done) {
+        it('should not crash with multiple invalid queries', function (done) {
             const queries = `
                 SELECT * from t1;
                 SELECT * FROM table_that_does_not_exists;
@@ -392,7 +392,7 @@ describe('queryTables', function() {
 
         const tokens = ['pixel_width', 'pixel_height', 'scale_denominator'];
         tokens.forEach(token => {
-            it('should not call Postgres with token: ' + token, function(done) {
+            it('should not call Postgres with token: ' + token, function (done) {
                 const query = 'Select 1 from t1 where 1 != ' + '!' + token + '!';
                 queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                     assert.ifError(err);
@@ -403,7 +403,7 @@ describe('queryTables', function() {
             });
         });
 
-        it('should not call Postgres with token: bbox', function(done) {
+        it('should not call Postgres with token: bbox', function (done) {
             const query = 'Select 1 from t1 where 1 != ST_Area(!bbox!)';
             queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                 assert.ifError(err);
@@ -413,7 +413,7 @@ describe('queryTables', function() {
             });
         });
 
-        it('should rethrow db errors', function(done) {
+        it('should rethrow db errors', function (done) {
             const mockConnection = createMockConnection(new Error('foo-bar-error'));
             queryTables.getQueryMetadataModel(mockConnection, 'foo-bar-query', function (err) {
                 assert.ok(err);
