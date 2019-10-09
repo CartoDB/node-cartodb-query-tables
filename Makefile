@@ -7,10 +7,10 @@ clean:
 	@rm -rf ./node_modules
 
 lint:
-	@./node_modules/.bin/eslint lib/**/*.js test/**/*.js
+	@./node_modules/.bin/eslint "lib/**/*.js" "test/**/*.js"
 
 lint-fix:
-	@./node_modules/.bin/eslint --fix lib/**/*.js test/**/*.js
+	@./node_modules/.bin/eslint --fix "lib/**/*.js" "test/**/*.js"
 
 TEST_SUITE := $(shell find test/{integration,unit} -name "*.js")
 
