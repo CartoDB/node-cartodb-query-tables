@@ -6,43 +6,42 @@ const SubstitutionTokens = require('../../lib/utils/substitution_tokens');
 const PSQL = require('cartodb-psql');
 const { postgres: databaseConfig } = require('../test_config');
 
-describe('QueryTables', function() {
-
-    /* Auxiliar function to create a mocked connection */
-    function createMockConnection(err, rows) {
-        return {
-            query: function(sql, params, callback, readonly) {
-                if (typeof params === 'function') {
-                  readonly = callback;
-                  callback = params;
-                  params = [];
-                }
-                // Queries should never contain tokens
-                assert.equal(SubstitutionTokens.hasTokens(sql), false);
-
-                const result = err ? null : { rows: rows };
-                return callback(err, result);
+/* Auxiliar function to create a mocked connection */
+function createMockConnection(err, rows) {
+    return {
+        query: function(sql, params, callback, readonly) {
+            if (typeof params === 'function') {
+                readonly = callback;
+                callback = params;
+                params = [];
             }
-        };
-    }
+            // Queries should never contain tokens
+            assert.equal(SubstitutionTokens.hasTokens(sql), false);
 
-    /* Auxiliar function to create a database connection */
-    function createDBConnection() {
-        const dbParams = Object.assign({}, databaseConfig);
-        const dbPoolParams = {};
+            const result = err ? null : { rows: rows };
+            return callback(err, result);
+        }
+    };
+}
 
-        return new PSQL(dbParams, dbPoolParams);
-    }
+/* Auxiliar function to create a database connection */
+function createDBConnection() {
+    const dbParams = Object.assign({}, databaseConfig);
+    const dbPoolParams = {};
 
-    /* Auxiliar function to create a connection to the FDW database */
-    function createFDWDBConnection() {
-        const dbParams = Object.assign({}, databaseConfig);
-        dbParams.dbname = dbParams.fdw_dbname;
-        const dbPoolParams = {};
+    return new PSQL(dbParams, dbPoolParams);
+}
 
-        return new PSQL(dbParams, dbPoolParams);
-    }
+/* Auxiliar function to create a connection to the FDW database */
+function createFDWDBConnection() {
+    const dbParams = Object.assign({}, databaseConfig);
+    dbParams.dbname = dbParams.fdw_dbname;
+    const dbPoolParams = {};
 
+    return new PSQL(dbParams, dbPoolParams);
+}
+
+describe('QueryTables', function() {
     describe('getQueryStatements', function() {
         /* These tests come from cartodb-postgresql (test/CDB_QueryStatementsTest.sql) */
         let connection;
