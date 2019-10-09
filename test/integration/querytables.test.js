@@ -49,12 +49,12 @@ describe('QueryTables', function() {
     describe('getQueryStatements', function() {
         /* These tests come from cartodb-postgresql (test/CDB_QueryStatementsTest.sql) */
         let connection;
-        before((done) => {
+        before(function (done) {
             connection = createDBConnection();
             done();
         });
 
-        after(done => {
+        after(function (done) {
             connection.end();
             done();
         });
@@ -195,7 +195,7 @@ describe('QueryTables', function() {
         const tablename_updateTime = 104000;
         const remote_updateTime = 200000;
 
-        before((done) => {
+        before(function (done) {
             connection = createDBConnection();
             fdw_connection = createFDWDBConnection();
 
@@ -250,7 +250,7 @@ describe('QueryTables', function() {
             }, readOnly);
         });
 
-        after(done => {
+        after(function (done) {
             connection.end();
             fdw_connection.end();
             done();
