@@ -162,7 +162,6 @@ describe('queryTables', function () {
     describe('.getQueryMetadataModel()', function () {
         let connection;
         let fdwConnection;
-        const db = require('../test_config').postgres;
 
         const t1UpdateTime = 100000;
         // t2 doesn't use cdb_tablemetadata
@@ -188,6 +187,7 @@ describe('queryTables', function () {
 
             fdwConnection.query(configureRemoteDatabaseQueries, params, (err) => {
                 assert.ifError(err);
+                const { user, password, host, port, fdw_dbname: fdwDatabaseName} = databaseConfig;
                 const configureLocalDatabaseQueries = `
                     CREATE TABLE t2(a integer);
                     CREATE TABLE t1(a integer);
@@ -199,10 +199,10 @@ describe('queryTables', function () {
                     CREATE EXTENSION postgres_fdw;
                     CREATE SERVER remote_server
                         FOREIGN DATA WRAPPER postgres_fdw
-                        OPTIONS (host '${db.host}', port '${db.port}', dbname '${db.fdw_dbname}');
-                    CREATE USER MAPPING FOR ${db.user}
+                        OPTIONS (host '${host}', port '${port}', dbname '${fdwDatabaseName}');
+                    CREATE USER MAPPING FOR ${user}
                         SERVER remote_server
-                        OPTIONS (user '${db.user}' ${db.password ? `, password '${db.password}'` : ''});
+                        OPTIONS (user '${user}' ${password ? `, password '${password}'` : ''});
                     IMPORT FOREIGN SCHEMA remote_schema
                     FROM SERVER remote_server INTO local_fdw;
 
@@ -228,36 +228,37 @@ describe('queryTables', function () {
             fdwConnection.end();
         });
 
+        const { dbname: databaseName, fdw_dbname: fdwDatabaseName} = databaseConfig;
         const defaultUpdateAt = -12345;
         const queries = [
             {
                 sql: 'TABLE t1;',
-                channel: `${db.dbname}:public.t1`,
+                channel: `${databaseName}:public.t1`,
                 updatedAt: t1UpdateTime
             },
             {
                 sql: 'SELECT * FROM t2;',
-                channel: `${db.dbname}:public.t2`,
+                channel: `${databaseName}:public.t2`,
                 updatedAt: defaultUpdateAt
             },
             {
                 sql: 'SELECT * FROM t2',
-                channel: `${db.dbname}:public.t2`,
+                channel: `${databaseName}:public.t2`,
                 updatedAt: defaultUpdateAt
             },
             {
                 sql: 'SELECT * FROM t1 UNION ALL SELECT * from t2;',
-                channel: `${db.dbname}:public.t2,public.t1`,
+                channel: `${databaseName}:public.t2,public.t1`,
                 updatedAt: t1UpdateTime
             },
             {
                 sql: 'SELECT * FROM t1 NATURAL JOIN "t with space";',
-                channel: `${db.dbname}:public.t1,public."t with space"`,
+                channel: `${databaseName}:public.t1,public."t with space"`,
                 updatedAt: t1UpdateTime
             },
             {
                 sql: 'WITH s1 AS (SELECT * FROM t1) SELECT * FROM t2;',
-                channel: `${db.dbname}:public.t2`
+                channel: `${databaseName}:public.t2`
             },
             {
                 sql: 'SELECT 1;',
@@ -265,37 +266,37 @@ describe('queryTables', function () {
             },
             {
                 sql: 'TABLE t1; TABLE t2;',
-                channel: `${db.dbname}:public.t2,public.t1`,
+                channel: `${databaseName}:public.t2,public.t1`,
                 updatedAt: t1UpdateTime
             },
             {
                 sql: "Select * from t3 where b = ';'; TABLE t2",
-                channel: `${db.dbname}:public.t2,public.t3`,
+                channel: `${databaseName}:public.t2,public.t3`,
                 updatedAt: t3UpdateTime
             },
             {
                 sql: 'TABLE t1; TABLE t1;',
-                channel: `${db.dbname}:public.t1`,
+                channel: `${databaseName}:public.t1`,
                 updatedAt: t1UpdateTime
             },
             {
                 sql: 'SELECT * FROM "tablena\'me";',
-                channel: `${db.dbname}:public."tablena'me"`,
+                channel: `${databaseName}:public."tablena'me"`,
                 updatedAt: tablenameUpdateTime
             },
             {
                 sql: 'SELECT * FROM local_fdw.remote_table',
-                channel: `${db.fdw_dbname}:local_fdw.remote_table`,
+                channel: `${fdwDatabaseName}:local_fdw.remote_table`,
                 updatedAt: remoteUpdateTime
             },
             {
                 sql: 'SELECT * FROM local_fdw.remote_table NATURAL JOIN public.t1',
-                channel: `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
+                channel: `${databaseName}:public.t1;;${fdwDatabaseName}:local_fdw.remote_table`,
                 updatedAt: remoteUpdateTime
             },
             {
                 sql: 'SELECT * FROM public.t1 NATURAL JOIN local_fdw.remote_table',
-                channel: `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
+                channel: `${databaseName}:public.t1;;${fdwDatabaseName}:local_fdw.remote_table`,
                 updatedAt: remoteUpdateTime
             }
         ];
@@ -387,7 +388,7 @@ describe('queryTables', function () {
                 queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                     assert.ifError(err);
                     assert.ok(result);
-                    assert.equal(result.getCacheChannel(), `${db.dbname}:public.t1`);
+                    assert.equal(result.getCacheChannel(), `${databaseName}:public.t1`);
                     return done();
                 });
             });
@@ -398,7 +399,7 @@ describe('queryTables', function () {
             queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                 assert.ifError(err);
                 assert.ok(result);
-                assert.equal(result.getCacheChannel(), `${db.dbname}:public.t1`);
+                assert.equal(result.getCacheChannel(), `${databaseName}:public.t1`);
                 return done();
             });
         });
