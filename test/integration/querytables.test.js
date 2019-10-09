@@ -16,7 +16,7 @@ function createMockConnection(err, rows) {
                 params = [];
             }
             // Queries should never contain tokens
-            assert.equal(SubstitutionTokens.hasTokens(sql), false);
+            assert.strictEqual(SubstitutionTokens.hasTokens(sql), false);
 
             const result = err ? null : { rows: rows };
             return callback(err, result);
@@ -46,20 +46,20 @@ describe('queryTables', function () {
         /* These tests come from cartodb-postgresql (test/CDB_QueryStatementsTest.sql) */
         it('Should work with a standard query', function () {
             const s = queryTables.getQueryStatements('SELECT * FROM geometry_columns;');
-            assert.equal(s.length, 1);
-            assert.equal(s[0], 'SELECT * FROM geometry_columns');
+            assert.strictEqual(s.length, 1);
+            assert.strictEqual(s[0], 'SELECT * FROM geometry_columns');
         });
 
         it('Should work with a query without ";"', function () {
             const s = queryTables.getQueryStatements('SELECT * FROM geometry_columns');
-            assert.equal(s.length, 1);
-            assert.equal(s[0], 'SELECT * FROM geometry_columns');
+            assert.strictEqual(s.length, 1);
+            assert.strictEqual(s[0], 'SELECT * FROM geometry_columns');
         });
 
         it('Should work with a query starting with ";"', function () {
             const s = queryTables.getQueryStatements(';;;;SELECT * FROM geometry_columns');
-            assert.equal(s.length, 1);
-            assert.equal(s[0], 'SELECT * FROM geometry_columns');
+            assert.strictEqual(s.length, 1);
+            assert.strictEqual(s[0], 'SELECT * FROM geometry_columns');
         });
 
         it('Should work with multiqueries', function () {
@@ -68,10 +68,10 @@ describe('queryTables', function () {
                 SELECT 1;
                 SELECT 2 = 3;
             `);
-            assert.equal(s.length, 3);
-            assert.equal(s[0], `SELECT * FROM geometry_columns`);
-            assert.equal(s[1], `SELECT 1`);
-            assert.equal(s[2], `SELECT 2 = 3`);
+            assert.strictEqual(s.length, 3);
+            assert.strictEqual(s[0], `SELECT * FROM geometry_columns`);
+            assert.strictEqual(s[1], `SELECT 1`);
+            assert.strictEqual(s[2], `SELECT 2 = 3`);
         });
 
         it('Should work with quoted commands', function () {
@@ -88,10 +88,10 @@ describe('queryTables', function () {
                 $h$ language 'plpgsql';
                 SELECT 5;
             `);
-            assert.equal(s.length, 4);
-            assert.equal(s[0], `CREATE table "my'tab;le" ("$" int)`);
-            assert.equal(s[1], `SELECT '1','$$', '$hello$', "$" FROM "my'tab;le"`);
-            assert.equal(s[2], `
+            assert.strictEqual(s.length, 4);
+            assert.strictEqual(s[0], `CREATE table "my'tab;le" ("$" int)`);
+            assert.strictEqual(s[1], `SELECT '1','$$', '$hello$', "$" FROM "my'tab;le"`);
+            assert.strictEqual(s[2], `
                 CREATE function "hi'there" ("'" text default '$')
                 returns void as $h$
                 declare a int; b text;
@@ -101,7 +101,7 @@ describe('queryTables', function () {
                 end;
                 $h$ language 'plpgsql'
             `.trim());
-            assert.equal(s[3], `SELECT 5`);
+            assert.strictEqual(s[3], `SELECT 5`);
         });
 
         it('Should work with quoted inserts', function () {
@@ -109,9 +109,9 @@ describe('queryTables', function () {
                 INSERT INTO "my''""t" values ('''','""'';;');
                 SELECT $qu;oted$ hi $qu;oted$;
             `);
-            assert.equal(s.length, 2);
-            assert.equal(s[0], `INSERT INTO "my''""t" values ('''','""'';;')`);
-            assert.equal(s[1], `SELECT $qu;oted$ hi $qu;oted$`);
+            assert.strictEqual(s.length, 2);
+            assert.strictEqual(s[0], `INSERT INTO "my''""t" values ('''','""'';;')`);
+            assert.strictEqual(s[1], `SELECT $qu;oted$ hi $qu;oted$`);
         });
 
         it('Should work with line breaks mid sentence', function () {
@@ -120,12 +120,12 @@ describe('queryTables', function () {
                 1 ; SELECT
                 2
             `);
-            assert.equal(s.length, 2);
-            assert.equal(s[0], `
+            assert.strictEqual(s.length, 2);
+            assert.strictEqual(s[0], `
                 SELECT
                 1
             `.trim());
-            assert.equal(s[1], `
+            assert.strictEqual(s[1], `
                 SELECT
                 2
             `.trim());
@@ -151,8 +151,8 @@ describe('queryTables', function () {
                 SELECT $quoted$ hi
                 $quoted$;
             `);
-            assert.equal(s.length, 1);
-            assert.equal(s[0], `
+            assert.strictEqual(s.length, 1);
+            assert.strictEqual(s[0], `
                 SELECT $quoted$ hi
                 $quoted$
             `.trim());
@@ -306,9 +306,9 @@ describe('queryTables', function () {
                 queryTables.getQueryMetadataModel(connection, q.sql, function (err, result) {
                     assert.ifError(err);
                     assert.ok(result);
-                    assert.equal(result.getCacheChannel(), q.channel);
+                    assert.strictEqual(result.getCacheChannel(), q.channel);
                     const expectedUpdatedAt = q.updatedAt ? q.updatedAt : defaultUpdateAt;
-                    assert.equal(result.getLastUpdatedAt(defaultUpdateAt), expectedUpdatedAt);
+                    assert.strictEqual(result.getLastUpdatedAt(defaultUpdateAt), expectedUpdatedAt);
                     return done();
                 });
             });
@@ -331,9 +331,9 @@ describe('queryTables', function () {
                 const selectQuery = 'SELECT * FROM local_fdw.remote_table;';
                 queryTables.getQueryMetadataModel(connection, selectQuery, function (err, result) {
                     assert.ifError(err);
-                    assert.equal(result.getCacheChannel(), "cartodb_query_tables_fdw:local_fdw.remote_table");
+                    assert.strictEqual(result.getCacheChannel(), "cartodb_query_tables_fdw:local_fdw.remote_table");
                     const fallbackValue = 123456789;
-                    assert.equal(result.getLastUpdatedAt(fallbackValue), fallbackValue);
+                    assert.strictEqual(result.getLastUpdatedAt(fallbackValue), fallbackValue);
                     return done();
                 });
             }, readOnly);
@@ -388,7 +388,7 @@ describe('queryTables', function () {
                 queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                     assert.ifError(err);
                     assert.ok(result);
-                    assert.equal(result.getCacheChannel(), `${databaseName}:public.t1`);
+                    assert.strictEqual(result.getCacheChannel(), `${databaseName}:public.t1`);
                     return done();
                 });
             });
@@ -399,7 +399,7 @@ describe('queryTables', function () {
             queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                 assert.ifError(err);
                 assert.ok(result);
-                assert.equal(result.getCacheChannel(), `${databaseName}:public.t1`);
+                assert.strictEqual(result.getCacheChannel(), `${databaseName}:public.t1`);
                 return done();
             });
         });

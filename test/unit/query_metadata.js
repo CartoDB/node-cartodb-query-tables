@@ -235,7 +235,7 @@ describe('QueryMetadata', function () {
                     updated_at: new Date(12345678)
                 },
             ]);
-            assert.strictDeepEqual(tables.key(), ['t:8ny9He']);
+            assert.deepStrictEqual(tables.key(), ['t:8ny9He']);
         });
 
         it('should keep escaped tables escaped (db:"sch-ema".table)', function () {
@@ -247,7 +247,7 @@ describe('QueryMetadata', function () {
                     updated_at: new Date(12345678)
                 },
             ]);
-            assert.strictDeepEqual(tables.key(), ['t:oVg75u']);
+            assert.deepStrictEqual(tables.key(), ['t:oVg75u']);
         });
 
         describe('with skipNotUpdatedAtTables enabled', function () {
