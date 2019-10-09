@@ -213,7 +213,6 @@ describe('QueryTables', function() {
 
             fdw_connection.query(configureRemoteDatabaseQueries, params, (err) => {
                 assert.ifError(err);
-
                 const configureLocalDatabaseQueries = `
                     CREATE TABLE t2(a integer);
                     CREATE TABLE t1(a integer);
@@ -242,7 +241,6 @@ describe('QueryTables', function() {
                         SELECT 'public.t3', to_timestamp(${t3_updateTime / 1000}) UNION ALL
                         SELECT 'public.tablena''me', to_timestamp(${tablename_updateTime / 1000});
                 `;
-
                 connection.query(configureLocalDatabaseQueries, params, (err) => {
                     assert.ifError(err);
                     done();
@@ -334,8 +332,8 @@ describe('QueryTables', function() {
                     assert.ifError(err);
                     assert.ok(result);
                     assert.equal(result.getCacheChannel(), q.channel);
-                    assert.equal(result.getLastUpdatedAt(defaultUpdateAt),
-                                 q.updated_at ? q.updated_at : defaultUpdateAt);
+                    const expectedUpdatedAt = q.updated_at ? q.updated_at : defaultUpdateAt;
+                    assert.equal(result.getLastUpdatedAt(defaultUpdateAt), expectedUpdatedAt);
                     return done();
                 });
             });
@@ -350,14 +348,13 @@ describe('QueryTables', function() {
         });
 
         it('should work with unimported CDB_TableMetadata', function(done) {
+            const dropQuery = `DROP FOREIGN TABLE local_fdw.CDB_TableMetadata`;
             const params = {};
             const readOnly = false;
-            connection.query(`DROP FOREIGN TABLE local_fdw.CDB_TableMetadata`, params, (err) => {
+            connection.query(dropQuery, params, (err) => {
                 assert.ifError(err);
-                queryTables.getQueryMetadataModel(
-                        connection,
-                        'SELECT * FROM local_fdw.remote_table;',
-                        function (err, result) {
+                const selectQuery = 'SELECT * FROM local_fdw.remote_table;';
+                queryTables.getQueryMetadataModel(connection, selectQuery, function (err, result) {
                     assert.ifError(err);
                     assert.equal(result.getCacheChannel(), "cartodb_query_tables_fdw:local_fdw.remote_table");
                     const fallbackValue = 123456789;
@@ -365,12 +362,11 @@ describe('QueryTables', function() {
                     return done();
                 });
             }, readOnly);
-
         });
 
         it('should not crash with syntax errors (INTO)', function(done) {
-            queryTables.getQueryMetadataModel(connection,
-                        'SELECT generate_series(1,10) InTO t1', function (err, result) {
+            const query = 'SELECT generate_series(1,10) InTO t1';
+            queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                 assert.ifError(err);
                 assert.ok(result);
                 return done();
@@ -378,29 +374,33 @@ describe('QueryTables', function() {
         });
 
         it('should error with an invalid query', function(done) {
-            queryTables.getQueryMetadataModel(connection,
-                        'SELECT * FROM table_that_does_not_exists', function (err) {
+            const query = 'SELECT * FROM table_that_does_not_exists';
+            queryTables.getQueryMetadataModel(connection, query, function (err) {
                 assert.ok(err);
                 return done();
             });
         });
 
         it('should error with an invalid query at the end', function(done) {
-            queryTables.getQueryMetadataModel(connection,
-                        `SELECT * from t1;
-                         SELECT * FROM table_that_does_not_exists`, function (err) {
+            const queries = `
+                SELECT * from t1;
+                SELECT * FROM table_that_does_not_exists
+            `;
+            queryTables.getQueryMetadataModel(connection, queries, function (err) {
                 assert.ok(err);
                 return done();
             });
         });
 
         it('should not crash with multiple invalid queries', function(done) {
-            queryTables.getQueryMetadataModel(connection,
-                        `SELECT * from t1;
-                         SELECT * FROM table_that_does_not_exists;
-                         SELECT * FROM table_that_does_not_exists;
-                         SELECT * FROM table_that_does_not_exists;
-                         SELECT * FROM table_that_does_not_exists`, function (err) {
+            const queries = `
+                SELECT * from t1;
+                SELECT * FROM table_that_does_not_exists;
+                SELECT * FROM table_that_does_not_exists;
+                SELECT * FROM table_that_does_not_exists;
+                SELECT * FROM table_that_does_not_exists
+            `;
+            queryTables.getQueryMetadataModel(connection, queries, function (err) {
                 assert.ok(err);
                 return done();
             });
@@ -410,7 +410,6 @@ describe('QueryTables', function() {
         tokens.forEach(token => {
             it('should not call Postgres with token: ' + token, function(done) {
                 const query = 'Select 1 from t1 where 1 != ' + '!' + token + '!';
-
                 queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                     assert.ifError(err);
                     assert.ok(result);
@@ -422,7 +421,6 @@ describe('QueryTables', function() {
 
         it('should not call Postgres with token: bbox', function(done) {
             const query = 'Select 1 from t1 where 1 != ST_Area(!bbox!)';
-
             queryTables.getQueryMetadataModel(connection, query, function (err, result) {
                 assert.ifError(err);
                 assert.ok(result);
@@ -433,7 +431,6 @@ describe('QueryTables', function() {
 
         it('should rethrow db errors', function(done) {
             const mockConnection = createMockConnection(new Error('foo-bar-error'));
-
             queryTables.getQueryMetadataModel(mockConnection, 'foo-bar-query', function (err) {
                 assert.ok(err);
                 assert.ok(err.message.match(/foo-bar-error/));
