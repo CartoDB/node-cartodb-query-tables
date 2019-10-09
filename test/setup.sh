@@ -3,7 +3,6 @@ set -e
 
 OPT_CREATE_PGSQL=yes
 OPT_DROP_PGSQL=yes
-OPT_COVERAGE=no
 
 while [ -n "$1" ]; do
         if test "$1" = "--nocreate-pg"; then
@@ -14,17 +13,10 @@ while [ -n "$1" ]; do
                 OPT_DROP_PGSQL=no
                 shift
                 continue
-        elif test "$1" = "--with-coverage"; then
-                OPT_COVERAGE=yes
-                shift
-                continue
         else
                 break
         fi
 done
-
-
-
 
 # This is where postgresql connection parameters are read from
 TESTENV=./test/test_config
@@ -66,7 +58,6 @@ if [[ -n "${pgFDWDATABASE}" ]]; then
     echo "PGFDWDATABASE: [$PGFDWDATABASE]";
 fi
 
-
 create_db() {
     if test x"$OPT_CREATE_PGSQL" = xyes; then
         echo -e "\nCreating test database: '$PGDATABASE'";
@@ -94,25 +85,14 @@ die() {
 
 trap 'die' HUP INT QUIT ABRT TERM;
 
-
-
 # Database setup
 cleanup;
 create_db;
 
-# echo -e "\nInstalling cartodb extension";
+echo -e "\nInstalling cartodb extension";
 
 # Install cartodb extension in the new database
- psql -c 'CREATE EXTENSION IF NOT EXISTS postgis CASCADE' ||  die "Could not install postgis in test database";
+psql -c 'CREATE EXTENSION IF NOT EXISTS postgis CASCADE' ||  die "Could not install postgis in test database";
+
 TEST_RESULT=0;
-if test x"$OPT_COVERAGE" = xyes; then
-  echo "Running tests with coverage";
-  ./node_modules/nyc/bin/nyc.js ./node_modules/.bin/mocha -u bdd --exit -t 5000 "$@" || TEST_RESULT=1;
-else
-  echo "Running tests"
-  ./node_modules/.bin/mocha -u bdd --exit -t 5000 "$@" || TEST_RESULT=1;
-fi
-
-cleanup;
-
 exit $TEST_RESULT;
