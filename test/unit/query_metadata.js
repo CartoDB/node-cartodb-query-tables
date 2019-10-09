@@ -355,15 +355,12 @@ describe('QueryMetadata', function () {
                     expectedLength: 2
                 }
             ];
-            scenarios.forEach(function (scenario) {
+            scenarios.forEach(({ tables, expectedLength }) => {
                 it('should get an array for multiple tables skipping the ones with no updated_at', function () {
-                    const tables = new QueryMetadata(scenario.tables);
-                    const keys = tables.key(skipNotUpdatedAtTables);
-
-                    assert.equal(keys.length, scenario.expectedLength);
-                    keys.forEach(function (key) {
-                        assert.equal(key.length, KEY_LENGTH);
-                    });
+                    const queryMetadata = new QueryMetadata(tables);
+                    const keys = queryMetadata.key(skipNotUpdatedAtTables);
+                    assert.equal(keys.length, expectedLength);
+                    keys.forEach(key => assert.equal(key.length, KEY_LENGTH));
                 });
             });
         });
@@ -824,7 +821,6 @@ describe('QueryMetadata', function () {
             it(`should get ${arrayLengthCond} by ${updatedAtCond} and ${analysisTablesCond}`, function () {
                 const queryMetadata = new QueryMetadata(result);
                 const tables = queryMetadata.getTables(skipNotUpdatedAtTables, skipAnalysisCachedTables);
-
                 assert.equal(tables.length, expectedLength);
             });
         });
