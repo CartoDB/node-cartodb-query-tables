@@ -82,10 +82,10 @@ describe('QueryTables', function() {
 
         it('Should work with multiqueries', function(done) {
             const s = QueryTables.getQueryStatements(`
-SELECT * FROM geometry_columns;
-SELECT 1;
-SELECT 2 = 3;
-`);
+                SELECT * FROM geometry_columns;
+                SELECT 1;
+                SELECT 2 = 3;
+            `);
             assert.equal(s.length, 3);
             assert.equal(s[0], `SELECT * FROM geometry_columns`);
             assert.equal(s[1], `SELECT 1`);
@@ -95,44 +95,62 @@ SELECT 2 = 3;
         });
 
         it('Should work with quoted commands', function(done) {
-/* jshint ignore:start */
             const s = QueryTables.getQueryStatements(`
-CREATE table "my'tab;le" ("$" int);
-SELECT '1','$$', '$hello$', "$" FROM "my'tab;le";
-CREATE function "hi'there" ("'" text default '$') returns void as $h$ declare a int; b text; begin b='hi'; return; end; $h$ language 'plpgsql';
-SELECT 5;
-`);
+                CREATE table "my'tab;le" ("$" int);
+                SELECT '1','$$', '$hello$', "$" FROM "my'tab;le";
+                CREATE function "hi'there" ("'" text default '$')
+                returns void as $h$
+                declare a int; b text;
+                begin
+                    b='hi';
+                    return;
+                end;
+                $h$ language 'plpgsql';
+                SELECT 5;
+            `);
             assert.equal(s.length, 4);
             assert.equal(s[0], `CREATE table "my'tab;le" ("$" int)`);
             assert.equal(s[1], `SELECT '1','$$', '$hello$', "$" FROM "my'tab;le"`);
-            assert.equal(s[2], `CREATE function "hi'there" ("'" text default '$') returns void as $h$ declare a int; b text; begin b='hi'; return; end; $h$ language 'plpgsql'`);
+            assert.equal(s[2], `
+                CREATE function "hi'there" ("'" text default '$')
+                returns void as $h$
+                declare a int; b text;
+                begin
+                    b='hi';
+                    return;
+                end;
+                $h$ language 'plpgsql'
+            `.trim());
             assert.equal(s[3], `SELECT 5`);
-/* jshint ignore:end */
             done();
         });
 
         it('Should work with quoted inserts', function(done) {
             const s = QueryTables.getQueryStatements(`
-INSER INTO "my''""t" values ('''','""'';;');
-SELECT $qu;oted$ hi $qu;oted$;
-`);
+                INSERT INTO "my''""t" values ('''','""'';;');
+                SELECT $qu;oted$ hi $qu;oted$;
+            `);
             assert.equal(s.length, 2);
-            assert.equal(s[0], `INSER INTO "my''""t" values ('''','""'';;')`);
+            assert.equal(s[0], `INSERT INTO "my''""t" values ('''','""'';;')`);
             assert.equal(s[1], `SELECT $qu;oted$ hi $qu;oted$`);
             done();
         });
 
         it('Should work with line breaks mid sentence', function(done) {
             const s = QueryTables.getQueryStatements(`
-SELECT
-1 ; SELECT
-2
-`);
+                SELECT
+                1 ; SELECT
+                2
+            `);
             assert.equal(s.length, 2);
-            assert.equal(s[0], `SELECT
-1`);
-            assert.equal(s[1], `SELECT
-2`);
+            assert.equal(s[0], `
+                SELECT
+                1
+            `.trim());
+            assert.equal(s[1], `
+                SELECT
+                2
+            `.trim());
             done();
         });
 
@@ -143,24 +161,25 @@ SELECT
         // ever gets fixed check if it's better
         it('Should not crash with illegal sql', function(done) {
             const s = QueryTables.getQueryStatements(`
-
-    /a
-    $b$
-    $c$d
-    ;
-`);
+                /a
+                $b$
+                $c$d
+                ;
+            `.trim());
             assert.ok(s);
             done();
         });
 
         it('Should work with quoted values', function(done) {
             const s = QueryTables.getQueryStatements(`
-SELECT $quoted$ hi
-$quoted$;
-`);
+                SELECT $quoted$ hi
+                $quoted$;
+            `);
             assert.equal(s.length, 1);
-            assert.equal(s[0], `SELECT $quoted$ hi
-$quoted$`);
+            assert.equal(s[0], `
+                SELECT $quoted$ hi
+                $quoted$
+            `.trim());
             done();
         });
     });
@@ -183,18 +202,19 @@ $quoted$`);
             const params = {};
             const readOnly = false;
 
-            fdw_connection.query(`
+            const configureRemoteDatabaseQueries = `
                 CREATE SCHEMA IF NOT EXISTS remote_schema;
                 CREATE TABLE IF NOT EXISTS remote_schema.remote_table ( a integer );
                 CREATE TABLE IF NOT EXISTS remote_schema.cdb_tablemetadata
                         (tabname text, updated_at timestamp with time zone);
                 INSERT INTO remote_schema.CDB_TableMetadata (tabname, updated_at)
                         SELECT 'remote_schema.remote_table', to_timestamp(${remote_updateTime / 1000});
+            `;
 
-            `, params, (err) => {
+            fdw_connection.query(configureRemoteDatabaseQueries, params, (err) => {
                 assert.ok(!err, err);
 
-            connection.query(`
+                const configureLocalDatabaseQueries = `
                     CREATE TABLE t2(a integer);
                     CREATE TABLE t1(a integer);
                     CREATE TABLE t3(b text);
@@ -216,17 +236,17 @@ $quoted$`);
                     CREATE TABLE IF NOT EXISTS cartodb.CDB_TableMetadata (
                         tabname regclass not null primary key,
                         updated_at timestamp with time zone not null default now()
-                      );
+                    );
                     INSERT INTO cartodb.CDB_TableMetadata (tabname, updated_at)
                         SELECT 'public.t1', to_timestamp(${t1_updateTime / 1000}) UNION ALL
                         SELECT 'public.t3', to_timestamp(${t3_updateTime / 1000}) UNION ALL
                         SELECT 'public.tablena''me', to_timestamp(${tablename_updateTime / 1000});
-                    `, params, (err) => {
-                assert.ok(!err, err);
-                done();
-            }, readOnly);
+                `;
 
-
+                connection.query(configureLocalDatabaseQueries, params, (err) => {
+                    assert.ok(!err, err);
+                    done();
+                }, readOnly);
             }, readOnly);
         });
 
@@ -282,7 +302,6 @@ $quoted$`);
 
         queries.forEach(q => {
             it('should return a DatabaseTables model (' + q.sql + ')', function(done) {
-
                 QueryTables.getQueryMetadataModel(connection, q.sql, function (err, result) {
                     assert.ok(!err, err);
                     assert.ok(result);
@@ -295,7 +314,6 @@ $quoted$`);
         });
 
         it('should not crash with syntax errors (DDL)', function(done) {
-
             QueryTables.getQueryMetadataModel(connection, 'DROP TABLE t1;', function (err, result) {
                 assert.ok(!err, err);
                 assert.ok(result);
@@ -304,7 +322,6 @@ $quoted$`);
         });
 
         it('should work with unimported CDB_TableMetadata', function(done) {
-
             const params = {};
             const readOnly = false;
             connection.query(`DROP FOREIGN TABLE local_fdw.CDB_TableMetadata`, params, (err) => {
@@ -324,7 +341,6 @@ $quoted$`);
         });
 
         it('should not crash with syntax errors (INTO)', function(done) {
-
             QueryTables.getQueryMetadataModel(connection,
                         'SELECT generate_series(1,10) InTO t1', function (err, result) {
                 assert.ok(!err, err);
@@ -334,7 +350,6 @@ $quoted$`);
         });
 
         it('should error with an invalid query', function(done) {
-
             QueryTables.getQueryMetadataModel(connection,
                         'SELECT * FROM table_that_does_not_exists', function (err) {
                 assert.ok(err);
@@ -343,7 +358,6 @@ $quoted$`);
         });
 
         it('should error with an invalid query at the end', function(done) {
-
             QueryTables.getQueryMetadataModel(connection,
                         `SELECT * from t1;
                          SELECT * FROM table_that_does_not_exists`, function (err) {
@@ -353,7 +367,6 @@ $quoted$`);
         });
 
         it('should not crash with multiple invalid queries', function(done) {
-
             QueryTables.getQueryMetadataModel(connection,
                         `SELECT * from t1;
                          SELECT * FROM table_that_does_not_exists;
@@ -368,8 +381,8 @@ $quoted$`);
         const tokens = ['pixel_width', 'pixel_height', 'scale_denominator'];
         tokens.forEach(token => {
             it('should not call Postgres with token: ' + token, function(done) {
-
                 const query = 'Select 1 from t1 where 1 != ' + '!' + token + '!';
+
                 QueryTables.getQueryMetadataModel(connection, query, function (err, result) {
                     assert.ok(!err, err);
                     assert.ok(result);
@@ -380,8 +393,8 @@ $quoted$`);
         });
 
         it('should not call Postgres with token: bbox', function(done) {
-
             const query = 'Select 1 from t1 where 1 != ST_Area(!bbox!)';
+
             QueryTables.getQueryMetadataModel(connection, query, function (err, result) {
                 assert.ok(!err, err);
                 assert.ok(result);
@@ -392,13 +405,12 @@ $quoted$`);
 
         it('should rethrow db errors', function(done) {
             const mockConnection = createMockConnection(new Error('foo-bar-error'));
+
             QueryTables.getQueryMetadataModel(mockConnection, 'foo-bar-query', function (err) {
                 assert.ok(err);
                 assert.ok(err.message.match(/foo-bar-error/));
                 return done();
             });
         });
-
     });
-
 });
