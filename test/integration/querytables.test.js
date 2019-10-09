@@ -41,8 +41,8 @@ function createFDWDBConnection() {
     return new PSQL(dbParams, dbPoolParams);
 }
 
-describe('QueryTables', function() {
-    describe('getQueryStatements', function() {
+describe('queryTables', function() {
+    describe('.getQueryStatements()', function() {
         /* These tests come from cartodb-postgresql (test/CDB_QueryStatementsTest.sql) */
         let connection;
 
@@ -169,7 +169,7 @@ describe('QueryTables', function() {
         });
     });
 
-    describe('getQueryMetadataModel', function() {
+    describe('.getQueryMetadataModel()', function() {
         let connection;
         let fdw_connection;
         const db = require('../test_config').postgres;
