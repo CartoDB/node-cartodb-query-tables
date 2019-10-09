@@ -171,18 +171,18 @@ describe('queryTables', function() {
 
     describe('.getQueryMetadataModel()', function() {
         let connection;
-        let fdw_connection;
+        let fdwConnection;
         const db = require('../test_config').postgres;
 
-        const t1_updateTime = 100000;
+        const t1UpdateTime = 100000;
         // t2 doesn't use cdb_tablemetadata
-        const t3_updateTime = 101000;
-        const tablename_updateTime = 104000;
-        const remote_updateTime = 200000;
+        const t3UpdateTime = 101000;
+        const tablenameUpdateTime = 104000;
+        const remoteUpdateTime = 200000;
 
         before(function (done) {
             connection = createDBConnection();
-            fdw_connection = createFDWDBConnection();
+            fdwConnection = createFDWDBConnection();
 
             const params = {};
             const readOnly = false;
@@ -193,10 +193,10 @@ describe('queryTables', function() {
                 CREATE TABLE IF NOT EXISTS remote_schema.cdb_tablemetadata
                         (tabname text, updated_at timestamp with time zone);
                 INSERT INTO remote_schema.CDB_TableMetadata (tabname, updated_at)
-                        SELECT 'remote_schema.remote_table', to_timestamp(${remote_updateTime / 1000});
+                        SELECT 'remote_schema.remote_table', to_timestamp(${remoteUpdateTime / 1000});
             `;
 
-            fdw_connection.query(configureRemoteDatabaseQueries, params, (err) => {
+            fdwConnection.query(configureRemoteDatabaseQueries, params, (err) => {
                 assert.ifError(err);
                 const configureLocalDatabaseQueries = `
                     CREATE TABLE t2(a integer);
@@ -222,9 +222,9 @@ describe('queryTables', function() {
                         updated_at timestamp with time zone not null default now()
                     );
                     INSERT INTO cartodb.CDB_TableMetadata (tabname, updated_at)
-                        SELECT 'public.t1', to_timestamp(${t1_updateTime / 1000}) UNION ALL
-                        SELECT 'public.t3', to_timestamp(${t3_updateTime / 1000}) UNION ALL
-                        SELECT 'public.tablena''me', to_timestamp(${tablename_updateTime / 1000});
+                        SELECT 'public.t1', to_timestamp(${t1UpdateTime / 1000}) UNION ALL
+                        SELECT 'public.t3', to_timestamp(${t3UpdateTime / 1000}) UNION ALL
+                        SELECT 'public.tablena''me', to_timestamp(${tablenameUpdateTime / 1000});
                 `;
                 connection.query(configureLocalDatabaseQueries, params, (err) => {
                     assert.ifError(err);
@@ -235,7 +235,7 @@ describe('queryTables', function() {
 
         after(function () {
             connection.end();
-            fdw_connection.end();
+            fdwConnection.end();
         });
 
         const defaultUpdateAt = -12345;
@@ -243,27 +243,27 @@ describe('queryTables', function() {
             {
                 sql: 'TABLE t1;',
                 channel: `${db.dbname}:public.t1`,
-                updated_at: t1_updateTime
+                updatedAt: t1UpdateTime
             },
             {
                 sql: 'SELECT * FROM t2;',
                 channel: `${db.dbname}:public.t2`,
-                updated_at: defaultUpdateAt
+                updatedAt: defaultUpdateAt
             },
             {
                 sql: 'SELECT * FROM t2',
                 channel: `${db.dbname}:public.t2`,
-                updated_at: defaultUpdateAt
+                updatedAt: defaultUpdateAt
             },
             {
                 sql: 'SELECT * FROM t1 UNION ALL SELECT * from t2;',
                 channel: `${db.dbname}:public.t2,public.t1`,
-                updated_at: t1_updateTime
+                updatedAt: t1UpdateTime
             },
             {
                 sql: 'SELECT * FROM t1 NATURAL JOIN "t with space";',
                 channel: `${db.dbname}:public.t1,public."t with space"`,
-                updated_at: t1_updateTime
+                updatedAt: t1UpdateTime
             },
             {
                 sql: 'WITH s1 AS (SELECT * FROM t1) SELECT * FROM t2;',
@@ -276,37 +276,37 @@ describe('queryTables', function() {
             {
                 sql: 'TABLE t1; TABLE t2;',
                 channel: `${db.dbname}:public.t2,public.t1`,
-                updated_at: t1_updateTime
+                updatedAt: t1UpdateTime
             },
             {
                 sql: "Select * from t3 where b = ';'; TABLE t2",
                 channel: `${db.dbname}:public.t2,public.t3`,
-                updated_at: t3_updateTime
+                updatedAt: t3UpdateTime
             },
             {
                 sql: 'TABLE t1; TABLE t1;',
                 channel: `${db.dbname}:public.t1`,
-                updated_at: t1_updateTime
+                updatedAt: t1UpdateTime
             },
             {
                 sql: 'SELECT * FROM "tablena\'me";',
                 channel: `${db.dbname}:public."tablena'me"`,
-                updated_at: tablename_updateTime
+                updatedAt: tablenameUpdateTime
             },
             {
                 sql: 'SELECT * FROM local_fdw.remote_table',
                 channel: `${db.fdw_dbname}:local_fdw.remote_table`,
-                updated_at: remote_updateTime
+                updatedAt: remoteUpdateTime
             },
             {
                 sql: 'SELECT * FROM local_fdw.remote_table NATURAL JOIN public.t1',
                 channel: `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
-                updated_at: remote_updateTime
+                updatedAt: remoteUpdateTime
             },
             {
                 sql: 'SELECT * FROM public.t1 NATURAL JOIN local_fdw.remote_table',
                 channel: `${db.dbname}:public.t1;;${db.fdw_dbname}:local_fdw.remote_table`,
-                updated_at: remote_updateTime
+                updatedAt: remoteUpdateTime
             }
         ];
 
@@ -316,7 +316,7 @@ describe('queryTables', function() {
                     assert.ifError(err);
                     assert.ok(result);
                     assert.equal(result.getCacheChannel(), q.channel);
-                    const expectedUpdatedAt = q.updated_at ? q.updated_at : defaultUpdateAt;
+                    const expectedUpdatedAt = q.updatedAt ? q.updatedAt : defaultUpdateAt;
                     assert.equal(result.getLastUpdatedAt(defaultUpdateAt), expectedUpdatedAt);
                     return done();
                 });
