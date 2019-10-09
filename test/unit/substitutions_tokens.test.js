@@ -7,8 +7,8 @@ describe('SubstitutionTokens', function () {
     describe('.hasTokens()', function () {
         const tokens = ['bbox', 'pixel_width', 'pixel_height', 'scale_denominator'];
         tokens.forEach(token => {
-            it('Works with Mapnik tokens: ' + token, function () {
-                assert.ok(SubstitutionTokens.hasTokens('!' + token + '!'));
+            it(`Works with Mapnik tokens: ${token}`, function () {
+                assert.ok(SubstitutionTokens.hasTokens(`!${token}!`));
             });
         });
 
@@ -20,10 +20,10 @@ describe('SubstitutionTokens', function () {
     describe('.replace()', function () {
         const tokens = ['bbox', 'pixel_width', 'pixel_height', 'scale_denominator'];
         tokens.forEach(token => {
-            it('Replaces Mapnik token: ' + token, function () {
+            it(`Replaces Mapnik token: ${token}`, function () {
                 const replaceValues = {};
                 replaceValues[token] = 'wadus';
-                assert.equal(SubstitutionTokens.replace('!' + token + '!', replaceValues), replaceValues[token]);
+                assert.equal(SubstitutionTokens.replace(`!${token}!`, replaceValues), replaceValues[token]);
             });
         });
 
@@ -47,8 +47,8 @@ describe('SubstitutionTokens', function () {
         const tokens = ['bbox', 'pixel_width', 'pixel_height', 'scale_denominator'];
 
         tokens.forEach(token => {
-            it('Replaces Mapnik token: ' + token, function () {
-                const replaced = SubstitutionTokens.replaceXYZ('!' + token + '!', { z: 1, x : 1, y : 0 });
+            it(`Replaces Mapnik token: ${token}`, function () {
+                const replaced = SubstitutionTokens.replaceXYZ(`!${token}!`, { z: 1, x : 1, y : 0 });
                 assert.ok(!SubstitutionTokens.hasTokens(replaced));
             });
         });
