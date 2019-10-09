@@ -30,10 +30,8 @@ describe('QueryTables', function() {
     function createDBConnection() {
         const dbParams = Object.assign({}, databaseConfig);
         const dbPoolParams = {};
-        let connection;
-        assert.doesNotThrow(() => { connection = new PSQL(dbParams, dbPoolParams);});
-        assert.ok(connection);
-        return connection;
+
+        return new PSQL(dbParams, dbPoolParams);
     }
 
     /* Auxiliar function to create a connection to the FDW database */
@@ -41,47 +39,41 @@ describe('QueryTables', function() {
         const dbParams = Object.assign({}, databaseConfig);
         dbParams.dbname = dbParams.fdw_dbname;
         const dbPoolParams = {};
-        let connection;
-        assert.doesNotThrow(() => { connection = new PSQL(dbParams, dbPoolParams);});
-        assert.ok(connection);
-        return connection;
+
+        return new PSQL(dbParams, dbPoolParams);
     }
 
     describe('getQueryStatements', function() {
         /* These tests come from cartodb-postgresql (test/CDB_QueryStatementsTest.sql) */
         let connection;
-        before(function (done) {
+
+        before(function () {
             connection = createDBConnection();
-            done();
         });
 
-        after(function (done) {
+        after(function () {
             connection.end();
-            done();
         });
 
-        it('Should work with a standard query', function(done) {
+        it('Should work with a standard query', function () {
             const s = queryTables.getQueryStatements('SELECT * FROM geometry_columns;');
             assert.equal(s.length, 1);
             assert.equal(s[0], 'SELECT * FROM geometry_columns');
-            done();
         });
 
-        it('Should work with a query without ";"', function(done) {
+        it('Should work with a query without ";"', function () {
             const s = queryTables.getQueryStatements('SELECT * FROM geometry_columns');
             assert.equal(s.length, 1);
             assert.equal(s[0], 'SELECT * FROM geometry_columns');
-            done();
         });
 
-        it('Should work with a query starting with ";"', function(done) {
+        it('Should work with a query starting with ";"', function () {
             const s = queryTables.getQueryStatements(';;;;SELECT * FROM geometry_columns');
             assert.equal(s.length, 1);
             assert.equal(s[0], 'SELECT * FROM geometry_columns');
-            done();
         });
 
-        it('Should work with multiqueries', function(done) {
+        it('Should work with multiqueries', function () {
             const s = queryTables.getQueryStatements(`
                 SELECT * FROM geometry_columns;
                 SELECT 1;
@@ -91,11 +83,9 @@ describe('QueryTables', function() {
             assert.equal(s[0], `SELECT * FROM geometry_columns`);
             assert.equal(s[1], `SELECT 1`);
             assert.equal(s[2], `SELECT 2 = 3`);
-
-            done();
         });
 
-        it('Should work with quoted commands', function(done) {
+        it('Should work with quoted commands', function () {
             const s = queryTables.getQueryStatements(`
                 CREATE table "my'tab;le" ("$" int);
                 SELECT '1','$$', '$hello$', "$" FROM "my'tab;le";
@@ -123,10 +113,9 @@ describe('QueryTables', function() {
                 $h$ language 'plpgsql'
             `.trim());
             assert.equal(s[3], `SELECT 5`);
-            done();
         });
 
-        it('Should work with quoted inserts', function(done) {
+        it('Should work with quoted inserts', function () {
             const s = queryTables.getQueryStatements(`
                 INSERT INTO "my''""t" values ('''','""'';;');
                 SELECT $qu;oted$ hi $qu;oted$;
@@ -134,10 +123,9 @@ describe('QueryTables', function() {
             assert.equal(s.length, 2);
             assert.equal(s[0], `INSERT INTO "my''""t" values ('''','""'';;')`);
             assert.equal(s[1], `SELECT $qu;oted$ hi $qu;oted$`);
-            done();
         });
 
-        it('Should work with line breaks mid sentence', function(done) {
+        it('Should work with line breaks mid sentence', function () {
             const s = queryTables.getQueryStatements(`
                 SELECT
                 1 ; SELECT
@@ -152,7 +140,6 @@ describe('QueryTables', function() {
                 SELECT
                 2
             `.trim());
-            done();
         });
 
         // This is an insane input, illegal sql
@@ -160,7 +147,7 @@ describe('QueryTables', function() {
         // take forever to process..
         // The actual result is not correct, so if the function
         // ever gets fixed check if it's better
-        it('Should not crash with illegal sql', function(done) {
+        it('Should not crash with illegal sql', function () {
             const s = queryTables.getQueryStatements(`
                 /a
                 $b$
@@ -168,10 +155,9 @@ describe('QueryTables', function() {
                 ;
             `.trim());
             assert.ok(s);
-            done();
         });
 
-        it('Should work with quoted values', function(done) {
+        it('Should work with quoted values', function () {
             const s = queryTables.getQueryStatements(`
                 SELECT $quoted$ hi
                 $quoted$;
@@ -181,7 +167,6 @@ describe('QueryTables', function() {
                 SELECT $quoted$ hi
                 $quoted$
             `.trim());
-            done();
         });
     });
 
@@ -249,10 +234,9 @@ describe('QueryTables', function() {
             }, readOnly);
         });
 
-        after(function (done) {
+        after(function () {
             connection.end();
             fdw_connection.end();
-            done();
         });
 
         const defaultUpdateAt = -12345;
