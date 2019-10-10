@@ -7,9 +7,11 @@
     "clean": "rm -rf ./node_modules",
     "lint": "eslint \"lib/**/*.js\" \"test/**/*.js\"",
     "lint:fix": "eslint --fix \"lib/**/*.js\" \"test/**/*.js\"",
-    "pretest": "npm run lint && npm run test:setup",
     "test:setup": "./test/setup.sh",
+    "test:cleanup": "./test/setup.sh --clean",
     "test": "NODE_ENV=test mocha --recursive test",
+    "pretest": "npm run lint && npm run test:cleanup && npm run test:setup",
+    "posttest": "npm run test:cleanup",
     "coverage": "nyc --reporter=lcov npm test"
   },
   "keywords": [
