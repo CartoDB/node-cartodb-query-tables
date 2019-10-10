@@ -28,6 +28,10 @@ while [ -n "$1" ]; do
     fi
 done
 
+if test x"$VERBOSE" = xno; then
+    exec &>/dev/null
+fi
+
 # This is where postgresql connection parameters are read from
 TESTENV=./test/test_config
 
@@ -41,72 +45,50 @@ fi
 pgUSER=$(node -e "console.log(require('${TESTENV}').postgres.user || '')");
 if [[ -n "${pgUSER}" ]]; then
     export PGUSER=${pgUSER};
-    if test x"$VERBOSE" = xyes; then
-        echo "PGUSER:     [$PGUSER]";
-    fi
+    echo "PGUSER:     [$PGUSER]";
 fi
 
 pgHOST=$(node -e "console.log(require('${TESTENV}').postgres.host || '')");
 if [[ -n "${pgHOST}" ]]; then
     export PGHOST=${pgHOST};
-    if test x"$VERBOSE" = xyes; then
-        echo "PGHOST:     [$PGHOST]";
-    fi
+    echo "PGHOST:     [$PGHOST]";
 fi
 
 pgPORT=$(node -e "console.log(require('${TESTENV}').postgres.port || '')");
 if [[ -n "${pgPORT}" ]]; then
     export PGPORT=${pgPORT};
-    if test x"$VERBOSE" = xyes; then
-        echo "PGPORT:     [$PGPORT]";
-    fi
+    echo "PGPORT:     [$PGPORT]";
 fi
 
 pgDATABASE=$(node -e "console.log(require('${TESTENV}').postgres.dbname || 'cartodb_query_tables_tests')");
 pgFDWDATABASE=$(node -e "console.log(require('${TESTENV}').postgres.fdw_dbname || 'cartodb_query_tables_fdw')");
 if [[ -n "${pgDATABASE}" ]]; then
     export PGDATABASE=${pgDATABASE};
-    if test x"$VERBOSE" = xyes; then
-        echo "PGDATABASE: [$PGDATABASE]";
-    fi
+    echo "PGDATABASE: [$PGDATABASE]";
 fi
 
 if [[ -n "${pgFDWDATABASE}" ]]; then
     export PGFDWDATABASE=${pgFDWDATABASE};
-    if test x"$VERBOSE" = xyes; then
-        echo "PGFDWDATABASE: [$PGFDWDATABASE]";
-    fi
+    echo "PGFDWDATABASE: [$PGFDWDATABASE]";
 fi
 
 create_db() {
     if test x"$OPT_CREATE_PGSQL" = xyes; then
         createdb -EUTF8 "$PGDATABASE" || die "Could not create test database '$PGDATABASE'. Please review the connection parameters";
-        if test x"$VERBOSE" = xyes; then
-            echo -e "\nDatabase '$PGDATABASE' created";
-        fi
+        echo -e "Database '$PGDATABASE' created";
         createdb -EUTF8 "$PGFDWDATABASE" || die "Could not create FDW test database '$PGFDWDATABASE'. Please review the connection parameters";
-        if test x"$VERBOSE" = xyes; then
-            echo -e "\nDatabase: '$PGFDWDATABASE' created";
-        fi
-        psql -c 'CREATE EXTENSION IF NOT EXISTS postgis CASCADE' &> /dev/null || die "Could not install postgis in test database server";
-        if test x"$VERBOSE" = xyes; then
-            echo -e "\Installed extension";
-        fi
+        echo -e "Database '$PGFDWDATABASE' created";
+        psql -c 'CREATE EXTENSION IF NOT EXISTS postgis CASCADE' || die "Could not install postgis in test database server";
+        echo -e "Installed extension";
     fi
 }
 
 cleanup() {
     if test x"$OPT_DROP_PGSQL" = xyes; then
-        (dropdb --if-exists "$PGDATABASE" &> /dev/null) ||
-            (echo -e "\nCould not drop database '$PGDATABASE'. Please review the connection parameters"; exit 1);
-        if test x"$VERBOSE" = xyes; then
-            echo -e "\nDropped database '$PGDATABASE'";
-        fi
-        (dropdb --if-exists "$PGFDWDATABASE" &> /dev/null) ||
-            (echo -e "\nCould not drop database '$PGFDWDATABASE'. Please review the connection parameters"; exit 1);
-        if test x"$VERBOSE" = xyes; then
-            echo -e "\nDropped database '$PGFDWDATABASE'";
-        fi
+        (dropdb --if-exists "$PGDATABASE" && echo -e "Dropped database '$PGDATABASE'") ||
+            (echo -e "Could not drop database '$PGDATABASE'. Please review the connection parameters"; exit 1);
+        (dropdb --if-exists "$PGFDWDATABASE" && echo -e "Dropped database '$PGFDWDATABASE'") ||
+            (echo -e "Could not drop database '$PGFDWDATABASE'. Please review the connection parameters"; exit 1);
     fi
 }
 
