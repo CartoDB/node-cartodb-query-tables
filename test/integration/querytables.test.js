@@ -179,6 +179,7 @@ describe('queryTables', function () {
             const configureRemoteDatabaseQueries = `
                 CREATE SCHEMA IF NOT EXISTS remote_schema;
                 CREATE TABLE IF NOT EXISTS remote_schema.remote_table ( a integer );
+                CREATE TABLE IF NOT EXISTS remote_schema.non_tracked_remote_table ( a integer );
                 CREATE TABLE IF NOT EXISTS remote_schema.cdb_tablemetadata
                         (tabname text, updated_at timestamp with time zone);
                 INSERT INTO remote_schema.CDB_TableMetadata (tabname, updated_at)
@@ -194,6 +195,9 @@ describe('queryTables', function () {
                     CREATE TABLE t3(b text);
                     CREATE TABLE "t with space" (a integer);
                     CREATE TABLE "tablena'me" (a integer);
+                    CREATE VIEW v1 AS SELECT * FROM t1;
+                    CREATE VIEW v1v3 AS SELECT * FROM t1 NATURAL JOIN t3;
+                    CREATE MATERIALIZED VIEW IF NOT EXISTS mv1 AS SELECT * FROM t1;
 
                     CREATE SCHEMA IF NOT EXISTS local_fdw;
                     CREATE EXTENSION postgres_fdw;
@@ -205,6 +209,13 @@ describe('queryTables', function () {
                         OPTIONS (user '${user}' ${password ? `, password '${password}'` : ''});
                     IMPORT FOREIGN SCHEMA remote_schema
                     FROM SERVER remote_server INTO local_fdw;
+
+                    CREATE MATERIALIZED VIEW IF NOT EXISTS mv_remote_table AS SELECT * FROM local_fdw.remote_table;
+                    CREATE VIEW v_remote_table AS SELECT * FROM local_fdw.remote_table;
+                    CREATE MATERIALIZED VIEW IF NOT EXISTS mv_non_tracked_remote_table AS
+                        SELECT * FROM local_fdw.non_tracked_remote_table;
+                    CREATE VIEW v_non_tracked_remote_table AS
+                        SELECT * FROM local_fdw.non_tracked_remote_table;
 
                     CREATE SCHEMA IF NOT EXISTS cartodb;
                     CREATE TABLE IF NOT EXISTS cartodb.CDB_TableMetadata (
@@ -298,6 +309,60 @@ describe('queryTables', function () {
                 sql: 'SELECT * FROM public.t1 NATURAL JOIN local_fdw.remote_table',
                 channel: `${databaseName}:public.t1;;${fdwDatabaseName}:local_fdw.remote_table`,
                 updatedAt: remoteUpdateTime
+            },
+            {
+                // view "v1" takes the last update time of table "t1"
+                sql: 'SELECT * FROM public.v1',
+                channel: `${databaseName}:public.t1`,
+                updatedAt: t1UpdateTime
+            },
+            {
+                // materialized view "mv1" takes the last update time of table "t1"
+                sql: 'SELECT * FROM public.mv1',
+                channel: `${databaseName}:public.mv1`,
+                updatedAt: t1UpdateTime
+            },
+            {
+                // view materialized view "mv_remote_table" takes the last update time of remote table "remote_table"
+                sql: 'SELECT * FROM public.mv_remote_table',
+                channel: `${databaseName}:public.mv_remote_table`,
+                updatedAt: remoteUpdateTime
+            },
+            {
+                sql: 'SELECT * FROM public.t1 NATURAL JOIN public.mv_remote_table',
+                channel: `${databaseName}:public.t1,public.mv_remote_table`,
+                updatedAt: remoteUpdateTime
+            },
+            {
+                sql: 'SELECT * FROM public.mv1 NATURAL JOIN public.t1',
+                channel: `${databaseName}:public.t1,public.mv1`,
+                updatedAt: t1UpdateTime
+            },
+            {
+                sql: 'SELECT * FROM public.mv_remote_table NATURAL JOIN local_fdw.remote_table',
+                channel: `${fdwDatabaseName}:local_fdw.remote_table;;${databaseName}:public.mv_remote_table`,
+                updatedAt: remoteUpdateTime
+            },
+            {
+                sql: 'SELECT * FROM public.v_remote_table NATURAL JOIN local_fdw.remote_table',
+                channel: `${fdwDatabaseName}:local_fdw.remote_table`,
+                updatedAt: remoteUpdateTime
+            },
+            {
+                // materialized view "mv_non_tracked_remote_table" should not take the last update time
+                sql: 'SELECT * FROM public.mv_non_tracked_remote_table',
+                channel: `${databaseName}:public.mv_non_tracked_remote_table`,
+                updatedAt: null
+            },
+            {
+                sql: 'SELECT * FROM public.mv_non_tracked_remote_table NATURAL JOIN public.v_remote_table',
+                channel: `${fdwDatabaseName}:local_fdw.remote_table;;${databaseName}:public.mv_non_tracked_remote_table`,
+                updatedAt: remoteUpdateTime
+            },
+            {
+                sql: 'SELECT * FROM public.mv_non_tracked_remote_table NATURAL JOIN public.mv_remote_table',
+                channel: `${databaseName}:public.mv_remote_table,public.mv_non_tracked_remote_table`,
+                updatedAt: remoteUpdateTime
             }
         ];
 
@@ -309,6 +374,77 @@ describe('queryTables', function () {
                     assert.strictEqual(result.getCacheChannel(), q.channel);
                     const expectedUpdatedAt = q.updatedAt ? q.updatedAt : defaultUpdateAt;
                     assert.strictEqual(result.getLastUpdatedAt(defaultUpdateAt), expectedUpdatedAt);
+                    return done();
+                });
+            });
+        });
+
+        const queriesSuite = [
+            // {
+            //     sql: 'SELECT * FROM public.mv1 NATURAL JOIN public.mv_remote_table',
+            //     tablenames: [
+            //         'public.mv1',
+            //         'public.mv_remote_table'
+            //     ],
+            //     updatedAt: [
+            //         new Date('1970-01-01T00:01:40.000Z'),
+            //         new Date('1970-01-01T00:03:20.000Z')
+            //     ]
+            // },
+            {
+                sql: 'SELECT * FROM public.mv_remote_table NATURAL JOIN public.mv_non_tracked_remote_table',
+                tablenames: [
+                    'public.mv_remote_table',
+                    'public.mv_non_tracked_remote_table'
+                ],
+                updatedAt: [
+                    new Date('1970-01-01T00:03:20.000Z'),
+                    null
+                ]
+            },
+            {
+                sql: 'SELECT * FROM public.v_non_tracked_remote_table NATURAL JOIN public.mv_non_tracked_remote_table ',
+                tablenames: [
+                    'local_fdw.non_tracked_remote_table',
+                    'public.mv_non_tracked_remote_table'
+                ],
+                updatedAt: [
+                    null,
+                    null
+                ]
+            },
+            {
+                sql: 'SELECT * FROM public.v1v3',
+                tablenames: [
+                    'public.t1',
+                    'public.t3'
+                ],
+                updatedAt: [
+                    new Date('1970-01-01T00:01:40.000Z'),
+                    new Date('1970-01-01T00:01:41.000Z')
+                ]
+            }
+        ];
+
+        queriesSuite.forEach(({ sql, updatedAt, tablenames = [] }) => {
+            const updateAtDesc = updatedAt.map(updated => updated === null ? 'null' : updated.toISOString()).join(', ');
+
+            it(`should return a updated_at: [${updateAtDesc}]; for query ${sql}`, function (done) {
+                queryTables.getQueryMetadataModel(connection, sql, (err, result) => {
+                    assert.ifError(err);
+
+                    result.getTables().forEach((table, index) => {
+                        assert.strictEqual(`${table.schema_name}.${table.table_name}`, tablenames[index]);
+
+                        const actualUpdatedAt = table.updated_at;
+                        const expectedUpdatedAt = updatedAt[index];
+                        if (expectedUpdatedAt === null) {
+                            assert.strictEqual(actualUpdatedAt, expectedUpdatedAt);
+                        } else {
+                            assert.strictEqual(actualUpdatedAt.getTime(), expectedUpdatedAt.getTime());
+                        }
+                    });
+
                     return done();
                 });
             });
