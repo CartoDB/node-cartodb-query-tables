@@ -367,30 +367,27 @@ describe('queryTables', function () {
         ];
 
         queries.forEach(q => {
-            it('should return a DatabaseTables model (' + q.sql + ')', function (done) {
-                queryTables.getQueryMetadataModel(connection, q.sql, function (err, result) {
-                    assert.ifError(err);
-                    assert.ok(result);
-                    assert.strictEqual(result.getCacheChannel(), q.channel);
-                    const expectedUpdatedAt = q.updatedAt ? q.updatedAt : defaultUpdateAt;
-                    assert.strictEqual(result.getLastUpdatedAt(defaultUpdateAt), expectedUpdatedAt);
-                    return done();
-                });
+            it('should return a DatabaseTables model (' + q.sql + ')', async function () {
+                const result = await queryTables.getQueryMetadataModel(connection, q.sql);
+                assert.ok(result);
+                assert.strictEqual(result.getCacheChannel(), q.channel);
+                const expectedUpdatedAt = q.updatedAt ? q.updatedAt : defaultUpdateAt;
+                assert.strictEqual(result.getLastUpdatedAt(defaultUpdateAt), expectedUpdatedAt);
             });
         });
 
         const queriesSuite = [
-            // {
-            //     sql: 'SELECT * FROM public.mv1 NATURAL JOIN public.mv_remote_table',
-            //     tablenames: [
-            //         'public.mv1',
-            //         'public.mv_remote_table'
-            //     ],
-            //     updatedAt: [
-            //         new Date('1970-01-01T00:01:40.000Z'),
-            //         new Date('1970-01-01T00:03:20.000Z')
-            //     ]
-            // },
+            {
+                sql: 'SELECT * FROM public.mv1 NATURAL JOIN public.mv_remote_table',
+                tablenames: [
+                    'public.mv1',
+                    'public.mv_remote_table'
+                ],
+                updatedAt: [
+                    new Date('1970-01-01T00:01:40.000Z'),
+                    new Date('1970-01-01T00:03:20.000Z')
+                ]
+            },
             {
                 sql: 'SELECT * FROM public.mv_remote_table NATURAL JOIN public.mv_non_tracked_remote_table',
                 tablenames: [
@@ -429,81 +426,78 @@ describe('queryTables', function () {
         queriesSuite.forEach(({ sql, updatedAt, tablenames = [] }) => {
             const updateAtDesc = updatedAt.map(updated => updated === null ? 'null' : updated.toISOString()).join(', ');
 
-            it(`should return a updated_at: [${updateAtDesc}]; for query ${sql}`, function (done) {
-                queryTables.getQueryMetadataModel(connection, sql, (err, result) => {
-                    assert.ifError(err);
+            it(`should return a updated_at: [${updateAtDesc}]; for query ${sql}`, async function () {
+                const result = await queryTables.getQueryMetadataModel(connection, sql);
 
-                    result.getTables().forEach((table, index) => {
-                        assert.strictEqual(`${table.schema_name}.${table.table_name}`, tablenames[index]);
+                result.getTables().forEach((table, index) => {
+                    assert.strictEqual(`${table.schema_name}.${table.table_name}`, tablenames[index]);
 
-                        const actualUpdatedAt = table.updated_at;
-                        const expectedUpdatedAt = updatedAt[index];
-                        if (expectedUpdatedAt === null) {
-                            assert.strictEqual(actualUpdatedAt, expectedUpdatedAt);
-                        } else {
-                            assert.strictEqual(actualUpdatedAt.getTime(), expectedUpdatedAt.getTime());
-                        }
-                    });
-
-                    return done();
+                    const actualUpdatedAt = table.updated_at;
+                    const expectedUpdatedAt = updatedAt[index];
+                    if (expectedUpdatedAt === null) {
+                        assert.strictEqual(actualUpdatedAt, expectedUpdatedAt);
+                    } else {
+                        assert.strictEqual(actualUpdatedAt.getTime(), expectedUpdatedAt.getTime());
+                    }
                 });
             });
         });
 
-        it('should not crash with syntax errors (DDL)', function (done) {
-            queryTables.getQueryMetadataModel(connection, 'DROP TABLE t1;', function (err, result) {
-                assert.ifError(err);
-                assert.ok(result);
-                return done();
-            });
+        it('should not crash with syntax errors (DDL)', async function () {
+            const result = queryTables.getQueryMetadataModel(connection, 'DROP TABLE t1;');
+            assert.ok(result);
         });
 
-        it('should work with unimported CDB_TableMetadata', function (done) {
+        function execQuery ({ connection, sql, params = {}, readOnly = true } = {}) {
+            return new Promise((resolve, reject) => {
+                connection.query(sql, params, (err, result) => err ? reject(err) : resolve(result.rows || []), readOnly);
+            });
+        }
+
+        it('should work with unimported CDB_TableMetadata', async function () {
             const dropQuery = 'DROP FOREIGN TABLE local_fdw.CDB_TableMetadata';
-            const params = {};
             const readOnly = false;
-            connection.query(dropQuery, params, (err) => {
-                assert.ifError(err);
-                const selectQuery = 'SELECT * FROM local_fdw.remote_table;';
-                queryTables.getQueryMetadataModel(connection, selectQuery, function (err, result) {
-                    assert.ifError(err);
-                    assert.strictEqual(result.getCacheChannel(), 'cartodb_query_tables_fdw:local_fdw.remote_table');
-                    const fallbackValue = 123456789;
-                    assert.strictEqual(result.getLastUpdatedAt(fallbackValue), fallbackValue);
-                    return done();
-                });
-            }, readOnly);
+
+            await execQuery({ connection, sql: dropQuery, readOnly });
+
+            const selectQuery = 'SELECT * FROM local_fdw.remote_table;';
+            const result = await queryTables.getQueryMetadataModel(connection, selectQuery);
+
+            assert.strictEqual(result.getCacheChannel(), 'cartodb_query_tables_fdw:local_fdw.remote_table');
+            const fallbackValue = 123456789;
+            assert.strictEqual(result.getLastUpdatedAt(fallbackValue), fallbackValue);
         });
 
-        it('should not crash with syntax errors (INTO)', function (done) {
+        it('should not crash with syntax errors (INTO)', async function () {
             const query = 'SELECT generate_series(1,10) InTO t1';
-            queryTables.getQueryMetadataModel(connection, query, function (err, result) {
-                assert.ifError(err);
-                assert.ok(result);
-                return done();
-            });
+            const result = await queryTables.getQueryMetadataModel(connection, query);
+            assert.ok(result);
         });
 
-        it('should error with an invalid query', function (done) {
+        it('should error with an invalid query', async function () {
             const query = 'SELECT * FROM table_that_does_not_exists';
-            queryTables.getQueryMetadataModel(connection, query, function (err) {
+
+            try {
+                await queryTables.getQueryMetadataModel(connection, query);
+            } catch (err) {
                 assert.ok(err);
-                return done();
-            });
+            }
         });
 
-        it('should error with an invalid query at the end', function (done) {
+        it('should error with an invalid query at the end', async function () {
             const queries = `
                 SELECT * from t1;
                 SELECT * FROM table_that_does_not_exists
             `;
-            queryTables.getQueryMetadataModel(connection, queries, function (err) {
+
+            try {
+                await queryTables.getQueryMetadataModel(connection, queries);
+            } catch (err) {
                 assert.ok(err);
-                return done();
-            });
+            }
         });
 
-        it('should not crash with multiple invalid queries', function (done) {
+        it('should not crash with multiple invalid queries', async function () {
             const queries = `
                 SELECT * from t1;
                 SELECT * FROM table_that_does_not_exists;
@@ -511,42 +505,41 @@ describe('queryTables', function () {
                 SELECT * FROM table_that_does_not_exists;
                 SELECT * FROM table_that_does_not_exists
             `;
-            queryTables.getQueryMetadataModel(connection, queries, function (err) {
+
+            try {
+                await queryTables.getQueryMetadataModel(connection, queries);
+            } catch (err) {
                 assert.ok(err);
-                return done();
-            });
+            }
         });
 
         const tokens = ['pixel_width', 'pixel_height', 'scale_denominator'];
         tokens.forEach(token => {
-            it('should not call Postgres with token: ' + token, function (done) {
+            it('should not call Postgres with token: ' + token, async function () {
                 const query = 'Select 1 from t1 where 1 != ' + '!' + token + '!';
-                queryTables.getQueryMetadataModel(connection, query, function (err, result) {
-                    assert.ifError(err);
-                    assert.ok(result);
-                    assert.strictEqual(result.getCacheChannel(), `${databaseName}:public.t1`);
-                    return done();
-                });
-            });
-        });
-
-        it('should not call Postgres with token: bbox', function (done) {
-            const query = 'Select 1 from t1 where 1 != ST_Area(!bbox!)';
-            queryTables.getQueryMetadataModel(connection, query, function (err, result) {
-                assert.ifError(err);
+                const result = await queryTables.getQueryMetadataModel(connection, query);
                 assert.ok(result);
                 assert.strictEqual(result.getCacheChannel(), `${databaseName}:public.t1`);
-                return done();
             });
         });
 
-        it('should rethrow db errors', function (done) {
+        it('should not call Postgres with token: bbox', async function () {
+            const query = 'Select 1 from t1 where 1 != ST_Area(!bbox!)';
+            const result = await queryTables.getQueryMetadataModel(connection, query);
+            assert.ok(result);
+            assert.strictEqual(result.getCacheChannel(), `${databaseName}:public.t1`);
+        });
+
+        it('should rethrow db errors', async function () {
             const mockConnection = createMockConnection(new Error('foo-bar-error'));
-            queryTables.getQueryMetadataModel(mockConnection, 'foo-bar-query', function (err) {
+
+            try {
+                await queryTables.getQueryMetadataModel(mockConnection, 'foo-bar-query');
+            } catch (err) {
                 assert.ok(err);
+                console.log('>', err);
                 assert.ok(err.message.match(/foo-bar-error/));
-                return done();
-            });
+            }
         });
     });
 });

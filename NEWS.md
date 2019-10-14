@@ -1,6 +1,11 @@
 # Version 0.7.0
 
 Released 2019-mm-dd
+
+Breaking Changes:
+  * Now `getQueryMetadataModel` returns a Promise and does not handle callbacks anymore
+
+Features:
   * Be able to get metadata from views and materialized views
 
 # Version 0.6.3
