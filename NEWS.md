@@ -1,3 +1,7 @@
+# Version 0.7.1
+
+Released 2019-mm-dd
+
 # Version 0.7.0
 
 Released 2019-10-21
