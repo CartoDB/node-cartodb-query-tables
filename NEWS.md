@@ -1,12 +1,13 @@
 # Version 0.7.0
 
-Released 2019-mm-dd
+Released 2019-10-21
 
 Breaking Changes:
   * Now `getQueryMetadataModel` returns a Promise and does not handle callbacks anymore
+  * Drop support Node.js 6
 
 Features:
-  * Be able to get metadata from views and materialized views
+  * Support Node.js 12
 
 # Version 0.6.3
 
