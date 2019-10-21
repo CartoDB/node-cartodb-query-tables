@@ -197,7 +197,6 @@ describe('queryTables', function () {
                     CREATE TABLE "tablena'me" (a integer);
                     CREATE VIEW v1 AS SELECT * FROM t1;
                     CREATE VIEW v1v3 AS SELECT * FROM t1 NATURAL JOIN t3;
-                    CREATE MATERIALIZED VIEW IF NOT EXISTS mv1 AS SELECT * FROM t1;
 
                     CREATE SCHEMA IF NOT EXISTS local_fdw;
                     CREATE EXTENSION postgres_fdw;
@@ -210,10 +209,7 @@ describe('queryTables', function () {
                     IMPORT FOREIGN SCHEMA remote_schema
                     FROM SERVER remote_server INTO local_fdw;
 
-                    CREATE MATERIALIZED VIEW IF NOT EXISTS mv_remote_table AS SELECT * FROM local_fdw.remote_table;
                     CREATE VIEW v_remote_table AS SELECT * FROM local_fdw.remote_table;
-                    CREATE MATERIALIZED VIEW IF NOT EXISTS mv_non_tracked_remote_table AS
-                        SELECT * FROM local_fdw.non_tracked_remote_table;
                     CREATE VIEW v_non_tracked_remote_table AS
                         SELECT * FROM local_fdw.non_tracked_remote_table;
 
@@ -317,51 +313,8 @@ describe('queryTables', function () {
                 updatedAt: t1UpdateTime
             },
             {
-                // materialized view "mv1" takes the last update time of table "t1"
-                sql: 'SELECT * FROM public.mv1',
-                channel: `${databaseName}:public.mv1`,
-                updatedAt: t1UpdateTime
-            },
-            {
-                // view materialized view "mv_remote_table" takes the last update time of remote table "remote_table"
-                sql: 'SELECT * FROM public.mv_remote_table',
-                channel: `${databaseName}:public.mv_remote_table`,
-                updatedAt: remoteUpdateTime
-            },
-            {
-                sql: 'SELECT * FROM public.t1 NATURAL JOIN public.mv_remote_table',
-                channel: `${databaseName}:public.t1,public.mv_remote_table`,
-                updatedAt: remoteUpdateTime
-            },
-            {
-                sql: 'SELECT * FROM public.mv1 NATURAL JOIN public.t1',
-                channel: `${databaseName}:public.t1,public.mv1`,
-                updatedAt: t1UpdateTime
-            },
-            {
-                sql: 'SELECT * FROM public.mv_remote_table NATURAL JOIN local_fdw.remote_table',
-                channel: `${fdwDatabaseName}:local_fdw.remote_table;;${databaseName}:public.mv_remote_table`,
-                updatedAt: remoteUpdateTime
-            },
-            {
                 sql: 'SELECT * FROM public.v_remote_table NATURAL JOIN local_fdw.remote_table',
                 channel: `${fdwDatabaseName}:local_fdw.remote_table`,
-                updatedAt: remoteUpdateTime
-            },
-            {
-                // materialized view "mv_non_tracked_remote_table" should not take the last update time
-                sql: 'SELECT * FROM public.mv_non_tracked_remote_table',
-                channel: `${databaseName}:public.mv_non_tracked_remote_table`,
-                updatedAt: null
-            },
-            {
-                sql: 'SELECT * FROM public.mv_non_tracked_remote_table NATURAL JOIN public.v_remote_table',
-                channel: `${fdwDatabaseName}:local_fdw.remote_table;;${databaseName}:public.mv_non_tracked_remote_table`,
-                updatedAt: remoteUpdateTime
-            },
-            {
-                sql: 'SELECT * FROM public.mv_non_tracked_remote_table NATURAL JOIN public.mv_remote_table',
-                channel: `${databaseName}:public.mv_remote_table,public.mv_non_tracked_remote_table`,
                 updatedAt: remoteUpdateTime
             }
         ];
@@ -377,39 +330,6 @@ describe('queryTables', function () {
         });
 
         const queriesSuite = [
-            {
-                sql: 'SELECT * FROM public.mv1 NATURAL JOIN public.mv_remote_table',
-                tablenames: [
-                    'public.mv1',
-                    'public.mv_remote_table'
-                ],
-                updatedAt: [
-                    new Date('1970-01-01T00:01:40.000Z'),
-                    new Date('1970-01-01T00:03:20.000Z')
-                ]
-            },
-            {
-                sql: 'SELECT * FROM public.mv_remote_table NATURAL JOIN public.mv_non_tracked_remote_table',
-                tablenames: [
-                    'public.mv_remote_table',
-                    'public.mv_non_tracked_remote_table'
-                ],
-                updatedAt: [
-                    new Date('1970-01-01T00:03:20.000Z'),
-                    null
-                ]
-            },
-            {
-                sql: 'SELECT * FROM public.v_non_tracked_remote_table NATURAL JOIN public.mv_non_tracked_remote_table ',
-                tablenames: [
-                    'local_fdw.non_tracked_remote_table',
-                    'public.mv_non_tracked_remote_table'
-                ],
-                updatedAt: [
-                    null,
-                    null
-                ]
-            },
             {
                 sql: 'SELECT * FROM public.v1v3',
                 tablenames: [
